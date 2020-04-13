@@ -8,6 +8,22 @@ CPSC 558 - Advanced Networking
 * Mike Peralta mikeperalta@csu.fullerton.edu
 * Thomas Ngo tngo0508@csu.fullerton.edu
 
+## Code Strategy
+
+Let's use lots of classes to avoid stepping on each others' commits.
+
+Some class suggestions; Let's have a class for each of the following:
+
+* Our custom switch
+* Switch MAC-to-PhysicalPort table
+* File server
+* Video server
+* File client
+* Video client
+* L2 packet (populated with member variables representing the state of an L2 packe)
+* L4 packet (populated with member variables representing the state of an L4 packet)
+* QoS decisions
+
 ## Git Strategy
 
 ### Branches

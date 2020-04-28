@@ -60,6 +60,7 @@ menu:
 	@echo "make run               ===> Run all our tests and stuff"
 	@echo
 	@echo "*** OpenFlow Controllers ***"
+	@echo "(probably delete this section because it doesn't appear we need to start controllers seperately)"
 	@echo "One of the following controllers must be running before our main program can execute."
 	@echo "Each of these targets controls how our central \"switch\" behaves."
 	@echo

@@ -1,8 +1,15 @@
 
 
-# CPSC 558 - Final Project (Just Some Tests)
+# CPSC 558 - Final Project
 
-This repo is just for testing and experiments. This is not the "real" final project repo.
+Our final project repo. Woot.
+
+* Mike Peralta mikeperalta@csu.fullerton.edu
+* Thomas Ngo tngo0508@csu.fullerton.edu
+
+## Professor Notes
+
+You can use the command ```make``` in the root of this repo for a list of commands that GNU Make will help you run.
 
 ## Installation
 

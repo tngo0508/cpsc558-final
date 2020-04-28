@@ -1,52 +1,36 @@
 
-# Final Project
 
-CPSC 558 - Advanced Networking
+# CPSC 558 - Final Project (Just Some Tests)
 
-## Team Members
+This repo is just for testing and experiments. This is not the "real" final project repo.
 
-* Mike Peralta mikeperalta@csu.fullerton.edu
-* Thomas Ngo tngo0508@csu.fullerton.edu
+## Installation
 
-## Code Strategy
+### Mininet
 
-Let's use lots of classes to avoid stepping on each others' commits.
+Mininet seems to be configured for only Python2 by default, and doesn't build correctly on Ubuntu 19.
 
-Some class suggestions; Let's have a class for each of the following:
+We also needed to use Python 3 to get Ryu working properly.
 
-* Our custom switch
-* Switch MAC-to-PhysicalPort table
-* File server
-* Video server
-* File client
-* Video client
-* L2 packet (populated with member variables representing the state of an L2 packe)
-* L4 packet (populated with member variables representing the state of an L4 packet)
-* QoS decisions
+Therefore, Mininet shouldn't be installed from repos, but instead built from scratch on Ubuntu 16.
 
-## Git Strategy
+#### Installation on Ubuntu 16.04
 
-### Branches
+Mininet has problems building on newer versions of Ubuntu, so it is my hope an older version of Ubuntu would work instead.
 
-All development should take place on the ***dev*** branch. When our project is in a stable state, we can merge ***dev*** into ***master***.
+* Create fresh installation of Ubuntu 16.04 inside VirtualBox
+    * Make sure to set bridged networking or some mode so the VM can pull updates, and is visible by your machine
+    * Probably want to create the machine on an SSD so updates/config don't take forever (or at least the VDI file)
 
-### Tags
+* Install, Start SSH daemon, Add SSH key
+    * ```sudo apt install openssh-server -y && sudo systemctl start sshd```
+    * Add your SSH key to the root account's authorized_keys file to avoid entering your password
 
-Whenever the ***master*** branch reaches a good state with new features, that could be considered "the best candidate we currently have for professor submission", we can add a git tag.
+* Open a terminal in this repo
+    * Set/export the environment variable UBUNTU_VM_HOST to point to the VM's IP or hostname
+    * Execute the make recipie ```make setup-ubuntu-vm```
 
-We should use [Semantic Versioning 2.0.0](https://semver.org/) to name our tags (aka releases).
 
-Long story short; They'd look like this:
-
-* v0.1.0
-* v1.0.0
-* v1.1.0
-* v1.1.1
-* etc
-
-## Other Info/Instructions
-
-TODO
 
 
 

@@ -1,0 +1,97 @@
+#!/bin/bash
+
+
+#
+log()
+{
+	echo "[Setup Ubuntu VM] $1"
+	logger "[Setup Ubuntu VM] $1"
+}
+complain()
+{
+	logger -s "[Setup Ubuntu VM] $1"
+}
+die()
+{
+	complain "Fatal: $1"
+	exit 1
+}
+disable_release_upgrades()
+{
+	log "Disabling annoying release upgrade prompts"
+	echo "[DEFAULT]\nPrompt=never" > "$RELEASE_UPGRADES_CONFIG"
+}
+do_upgrade()
+{
+	#	Upgrade
+	apt update -y || die "Failed to update Ubuntu"
+	apt upgrade -y || die "Failed to upgrade Ubuntu"
+	apt autoremove -y || die "Failed to autoremove"
+}
+install_apt_deps()
+{
+	apt install git -y || die "Failed to install git stuff"
+	apt install graphviz -y || die "Failed to install graphviz"
+}
+install_pip3_deps()
+{
+	#	Install pip3 stuff
+	apt install python3-pip -y || die "Failed to install pip3"
+	for P in "${PIP3_PACKAGES[@]}"
+	do
+		log "Trying to install pip3 package: $P"
+		pip3 install "$P" || die "Failed to install pip3 package: $P"
+		log "Successfully installed pip3 package: $P"
+	done
+}
+clone_mininet_repo()
+{
+	#	Clone the repo
+	rm -rfv "$MININET_REPO_DIR"
+	mkdir --parents "$MININET_REPO_DIR" || die "Failed to ensure MININET_REPO_DIR: $MININET_REPO_DIR"
+	git clone --recursive "$MININET_REPO_URL" "$MININET_REPO_DIR" || die "Failed to clone Mininet repo"
+}
+clean_mininet_build()
+{
+	log "Cleaning build dirs"
+	rm -rfv "$MININET_REPO_DIR/../oflops"
+	rm -rfv "$MININET_REPO_DIR/../oftest"
+	rm -rfv "$MININET_REPO_DIR/../openflow"
+	rm -rfv "$MININET_REPO_DIR/../pox"
+}
+build_mininet()
+{
+	log "Building mininet"
+
+	local LAST_DIR
+
+	LAST_DIR=`pwd`
+	cd "$MININET_REPO_DIR" && PYTHON=python3 util/install.sh -a || die "WTF"
+	cd "$LAST_DIR" || die "Failed to return to last dir for some reason: $LAST_DIR"
+}
+
+#
+MININET_REPO_DIR="/root/Documents/mininet-installs/mininet"
+MININET_REPO_URL="https://github.com/mininet/mininet.git"
+PIP3_PACKAGES=("eventlet" "graphviz" "ryu")
+RELEASE_UPGRADES_CONFIG="/etc/update-manager/release-upgrades"
+
+
+#	Do a bunch of stufffffffffff
+disable_release_upgrades
+do_upgrade
+install_apt_deps
+install_pip3_deps
+clone_mininet_repo
+clean_mininet_build
+build_mininet
+
+
+
+
+
+#	Done
+log "Success!"
+
+
+

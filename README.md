@@ -76,19 +76,32 @@ Of our controllers, we have the following source files:
 The tests invoked via ```make run``` are designed to prove our controllers are working as intended.
 Each test will use one of the above controllers, and is named after the controller used.
 
-* The ***DumbHub*** test should show lower aggregate bandwidth than with the SimpleSwitch test.
+You'll know a test is being run by a big group of asterisks appearing in the console with the test's name.
+For example, when the *Demo* test is being run (code not writte by us but that helps us prove our framework is functioning correctly) you might see:
+
+```
+[558 Final Project][INFO] [Apr 29, 2020; 04:24PM.33] ****************************************
+[558 Final Project][INFO] [Apr 29, 2020; 04:24PM.33] ***** Running test with: demo
+[558 Final Project][INFO] [Apr 29, 2020; 04:24PM.33] ****************************************
+```
+
+Also, each test has its own folder in the *log* subdirectory of our repo, for easier inspection / proof.
+
+Here are the tests that should run:
+
+* The ***Demo*** test is not our own code and should not be considered part of our delivery. It only exists here to help us debug/design/verify our general framework (i.e., all things not Ryu)
+
+* The ***Hub*** test should show lower aggregate bandwidth than with the SimpleSwitch test.
     * The File Server/Client nodes should appear to be splitting the bandwidth with the Video Server/Client nodes
     * There may also be a little slowdown due to congestion / collisions.
     * The Tattle Tail node should also show that it received quite a bit of broadcasted data
 
-* The ***SimpleSwitch*** test should show higher aggregate bandwidth than with the ***DumbHub*** test.
+* The ***Switch*** test should show higher aggregate bandwidth than with the ***DumbHub*** test.
     * The File Server/Client nodes sholud not appear to be splitting line bandwidth, but only the max aggregate bandwidth of the switch.
     * The Tattle Tail node should report very little stray broadcast data as compared with the ***DumbHub*** test.
 
 * The ***QSwitch*** test should generally present the same as the ***SimpleSwitch*** test, with one exception:
     * The Video Server/Client nodes should show significantly more bandwidth than the File Server/Client nodes.
-
-***TODO*** Come up with some like ... logs and stuff to prove this. Probably sort logs into folders named after tests.
 
 ### Mininet
 

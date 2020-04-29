@@ -24,7 +24,7 @@ class VideoClient:
 	__socket = None
 	__listener_thread = None
 	
-	__wanted_data_size_megabytes = 1
+	__wanted_data_size_megabytes = 100
 	__beg_string = "MOAR PLZ!\n".encode()
 	
 	__benchmark_is_running = False

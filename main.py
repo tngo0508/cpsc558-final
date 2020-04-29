@@ -26,10 +26,10 @@ def consume_arguments():
 	
 	parser.add_argument(
 		"--run-name",
-		required=False,
+		required=True,
 		dest="run_name",
 		help="Set a name for this particular run (helps logging)",
-		default=None
+		choices=["demo", "hub", "switch", "qswitch"]
 	)
 	
 	parser.add_argument(
@@ -72,10 +72,10 @@ def main():
 	args = consume_arguments()
 	
 	if args.run:
-		fp = CPSC558FinalProject()
+		fp = CPSC558FinalProject(run_name=args.run_name)
 		fp.run()
 	elif args.topology:
-		fp = CPSC558FinalProject()
+		fp = CPSC558FinalProject(run_name=args.run_name)
 		fp.do_topology_test()
 	elif args.video_server:
 		v = VideoServer(run_name=args.run_name, name=args.name)

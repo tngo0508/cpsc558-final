@@ -7,6 +7,7 @@ from controllers.DumbHub import DumbHub
 
 import mininet
 from mininet.net import Mininet
+from mininet.clean import Cleanup
 from mininet.node import Ryu
 
 import os
@@ -18,10 +19,12 @@ class CPSC558FinalProject:
 	
 	__DEFAULT_RUN_NAME = "main"
 	
-	def __init__(self):
+	def __init__(self, run_name):
+		
+		self.__run_name = run_name
 		
 		self.__logger = Logger(
-			group=self.__DEFAULT_RUN_NAME,
+			group=run_name,
 			log_name=__name__,
 			label="558 Final Project"
 		)
@@ -35,6 +38,9 @@ class CPSC558FinalProject:
 	def run(self):
 		
 		log = self.__logger.get()
+		
+		self.__logger.heading("Running test with: " + self.__run_name)
+		
 		log.info("Running main project")
 		
 		log.info("Instantiating custom Topology class")
@@ -42,24 +48,28 @@ class CPSC558FinalProject:
 		log.info("Rendering graph of current topology")
 		self.__topo.render_dotgraph()
 		
-		# Instantiate some controllers to run with
+		# Instantiate some controllers we can choose to run with
 		controllers = dict({
-			"Demo Switch": Ryu('ryu_demo_switch', 'controllers/Demo_SimpleSwitch.py')  # ,
-			# "Dumb Hub": Ryu('ryu_dumb_hub', 'controllers/DumbHub.py')
 			
-			# "Simple Switch": Ryu('ryu_dumb_hub', 'DumbHubController.py'),
-			# "QoS Switch": Ryu('ryu_dumb_hub', 'DumbHubController.py'),
+			"demo": ("Demo Switch", Ryu('ryu_demo_switch', 'controllers/Demo_SimpleSwitch.py')),
+			"hub": ("Dumb Hub", Ryu('ryu_dumb_hub', 'controllers/DumbHub.py')),
+			"switch": ("Simple Switch", Ryu('ryu_simple_switch', 'controllers/SimpleSwitch.py')),
+			"qswitch": ("QoS Switch", Ryu('ryu_qswitch', 'controllers/QSwitch.py'))
 		})
 		
-		# Run with each controller
-		for controller_name in controllers.keys():
-			self.__logger.heading("Running test with: " + controller_name)
-			self.run_with_controller(controller_name, controllers[controller_name])
+		if self.__run_name in controllers.keys():
+			
+			controller_name, controller = controllers[self.__run_name]
+			
+			self.run_with_controller(controller)
+			
+		else:
+			raise Exception("Invalid run name: " + str(self.__run_name))
 		
 		#
-		log.info("Done running main project")
+		log.info("Done")
 	
-	def run_with_controller(self, controller_name, controller):
+	def run_with_controller(self, controller):
 		
 		log = self.__logger.get()
 		
@@ -68,23 +78,27 @@ class CPSC558FinalProject:
 		self.__net = Mininet(
 			topo=self.__topo,
 			controller=controller,
-			waitConnected=True
+			waitConnected=False
 		)
 		self.__topo.set_net(self.__net)
 		self.__topo.consume_instances()
 		
 		log.info("Starting Mininet (will wait for controller)")
 		self.__net.start()
+		wait_result = self.__net.waitConnected(timeout=10)
+		if wait_result is False:
+			log.error("Failed to wait for a controller!")
+			log.error("FAIL")
+			return
 		log.info("Mininet found a controller to connect to")
 		
 		# Ping tests
 		self.ping_all()
 		
 		# Begin video traffic
-		self.start_video_traffic(controller_name, True)
+		self.start_video_traffic(True)
 		
 		#
-		# self.__net.interact()
 		self.wait_for_hosts_to_finish()
 	
 	def do_topology_test(self):
@@ -137,15 +151,15 @@ class CPSC558FinalProject:
 		
 		return file_path
 	
-	def start_video_traffic(self, run_name, use_log: bool = True):
+	def start_video_traffic(self, use_log: bool = True):
 		
 		log = self.__logger.get()
 		
 		log.info("Starting video traffic")
 		
-		server_log_file = self.make_process_stdout_file_path(run_name, "video-server-stdout")
+		server_log_file = self.make_process_stdout_file_path(self.__run_name, "video-server-stdout")
 		log.info(server_log_file)
-		client_log_file = self.make_process_stdout_file_path(run_name, "video-clients-stdout")
+		client_log_file = self.make_process_stdout_file_path(self.__run_name, "video-clients-stdout")
 		log.info(client_log_file)
 		
 		# Create video server instance
@@ -154,10 +168,10 @@ class CPSC558FinalProject:
 		# Start video server
 		if use_log:
 			server.cmd("ifconfig | grep eth >> \"" + server_log_file + "\" 2>&1")
-			server.sendCmd("./main.py --video-server --run-name \"" + str(run_name) + "\" --name \"" + str(server) + "\" >> \"" + server_log_file + "\" 2>&1")
+			server.sendCmd("./main.py --video-server --run-name \"" + str(self.__run_name) + "\" --name \"" + str(server) + "\" >> \"" + server_log_file + "\" 2>&1")
 		else:
 			server.cmd("ifconfig | grep eth 2>&1")
-			server.sendCmd("./main.py --video-server --run-name \"" + str(run_name) + "\" --name \"" + str(server) + "\" 2>&1")
+			server.sendCmd("./main.py --video-server --run-name \"" + str(self.__run_name) + "\" --name \"" + str(server) + "\" 2>&1")
 		
 		# Instantiate clients
 		clients = list(self.__topo.get_video_client_instances().values())
@@ -167,10 +181,10 @@ class CPSC558FinalProject:
 			
 			if use_log:
 				client.cmd("ifconfig | grep eth >> \"" + client_log_file + "\" 2>&1")
-				client.sendCmd("./main.py --video-client --run-name \"" + str(run_name) + "\" --name \"" + str(client) + "\" >> \"" + client_log_file + "\" 2>&1")
+				client.sendCmd("./main.py --video-client --run-name \"" + str(self.__run_name) + "\" --name \"" + str(client) + "\" >> \"" + client_log_file + "\" 2>&1")
 			else:
 				client.cmd("ifconfig | grep eth 2>&1")
-				client.sendCmd("./main.py --video-client --run-name \"" + str(run_name) + "\" --name \"" + str(client) + "\" 2>&1")
+				client.sendCmd("./main.py --video-client --run-name \"" + str(self.__run_name) + "\" --name \"" + str(client) + "\" 2>&1")
 		
 		log.info("Done starting video traffic")
 	

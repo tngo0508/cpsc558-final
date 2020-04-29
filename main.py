@@ -29,7 +29,7 @@ def consume_arguments():
 		required=True,
 		dest="run_name",
 		help="Set a name for this particular run (helps logging)",
-		choices=["demo", "hub", "switch", "qswitch"]
+		choices=["topology", "demo", "hub", "switch", "qswitch"]
 	)
 	
 	parser.add_argument(

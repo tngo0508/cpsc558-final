@@ -103,9 +103,10 @@ clean-mininet-state:
 topo:	deploy
 topo:	topology
 topology:	clean-mininet-state | $(LOCAL_RENDER_DIR)
-	ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --topo"
+	ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --topo --run-name topology"
 	@echo Grabbing the topology image
 	scp "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)":"$(UBUNTU_VM_TOPOLOGY_IMAGE)" "$(LOCAL_RENDER_DIR)"
+	$(MAKE) pull-logs
 .PHONY:	topo topology
 
 

@@ -14,7 +14,7 @@ First, you can use the command ```make``` in the root of this repo for a list of
 Essentially, you'd need to go through the following steps:
 
 1. Setup a fresh Ubuntu 16.04 VM (Sorry !!!)
-2. You already made sure the VM can reach the internet in Step 1; Also make sure the host can reach the VM (we used bridged mode)
+2. Make sure the VM can reach the internet, and is reachable by your host machine (we used bridged mode)
 3. Setup the root account's password or SSH key so the user on your current machine can SSH into the VM using the root user
 4. Set the environment variable UBUNTU_VM_HOST to the IP address or hostname of your Ubuntu 16 VM
     (you'll see Make mention the value it's reading)
@@ -23,10 +23,15 @@ Essentially, you'd need to go through the following steps:
 
     ```bash
     $ make setup-ubuntu-vm
-
    ```
 
 7. Wait endlessly. Maybe watch a show or call a friend.
+    
+    If you see an error similar to:
+    
+     ```Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?```,
+     
+     ... your Ubuntu VM is probably still updating.
 
 8. Run the topology test with:
 

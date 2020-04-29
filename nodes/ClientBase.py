@@ -1,6 +1,6 @@
 
 
-from HostBase import HostBase
+from nodes.HostBase import HostBase
 
 
 class ClientBase(HostBase):

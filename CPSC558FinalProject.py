@@ -2,7 +2,7 @@
 from Logger import Logger
 
 from Topology import Topology
-from DumbHubController import DumbHubController
+from controllers.DumbHub import DumbHub
 
 
 import mininet

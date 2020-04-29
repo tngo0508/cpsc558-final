@@ -4,8 +4,8 @@ import argparse
 
 from CPSC558FinalProject import CPSC558FinalProject
 
-from VideoServer import VideoServer
-from VideoClient import VideoClient
+from nodes.VideoServer import VideoServer
+from nodes.VideoClient import VideoClient
 
 
 def consume_arguments():

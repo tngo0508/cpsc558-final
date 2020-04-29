@@ -1,6 +1,6 @@
 
 
-from ServerBase import ServerBase
+from nodes.ServerBase import ServerBase
 
 import socket
 

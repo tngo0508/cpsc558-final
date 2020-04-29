@@ -1,6 +1,6 @@
 
 
-from ClientBase import ClientBase
+from nodes.ClientBase import ClientBase
 
 
 class FileClient(ClientBase):

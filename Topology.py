@@ -1,11 +1,11 @@
 
 
 from Logger import Logger
-from FileServer import FileServer
-from FileClient import FileClient
-from VideoServer import VideoServer
-from VideoClient import VideoClient
-from TattleTail import TattleTail
+from nodes.FileServer import FileServer
+from nodes.FileClient import FileClient
+from nodes.VideoServer import VideoServer
+from nodes.VideoClient import VideoClient
+from nodes.TattleTail import TattleTail
 
 import graphviz
 

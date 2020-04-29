@@ -24,9 +24,10 @@ class VideoClient:
 	__socket = None
 	__listener_thread = None
 	
-	__wanted_data_size_megabytes = 100
+	__wanted_data_size_megabytes = 1
 	__beg_string = "MOAR PLZ!\n".encode()
 	
+	__benchmark_is_running = False
 	__benchmark_start_time = 0
 	__benchmark_end_time = 0
 	__benchmark_elapsed_time = 0
@@ -34,10 +35,14 @@ class VideoClient:
 	__benchmark_bytes_per_second = 0
 	__benchmark_megabites_per_second = 0
 	
-	def __init__(self, host=None, port=None):
+	def __init__(self, name=None, host=None, port=None):
 		
 		my_ip = subprocess.check_output(["hostname", "-I"]).decode().strip()
-		self.__logger = Logger("VideoClient " + my_ip)
+		
+		if name is None:
+			name = my_ip
+		
+		self.__logger = Logger("VideoClient " + my_ip, name)
 		
 		if host is None:
 			host = self.__default_server_host
@@ -50,16 +55,22 @@ class VideoClient:
 		# self.__logger.set_verbose(True)
 		
 	def __del__(self):
-	
-		if self.__listener_thread:
+		
+		if threading.current_thread == threading.main_thread() and self.__listener_thread:
+			
 			self.__listener_thread.join()
 			self.__listener_thread = None
 	
 	def run(self):
 		
+		log = self.__logger.get()
+		
+		log.info("Running ...")
+		
 		self.init_socket()
-		self.init_data_receiver()
 		self.leech_loop()
+		
+		log.info("Finished running")
 		
 	def init_socket(self):
 		
@@ -73,17 +84,24 @@ class VideoClient:
 	
 	def data_receiver(self):
 		
-		# log = self.__logger.get()
+		log = self.__logger.get()
 		
-		while True:
+		while self.__benchmark_is_running:
 			
 			# log.info("Data receiver iteration")
 			
 			if self.socket_has_data():
+				
 				# log.info("Receiving ... ")
+				
 				received, sender = self.__socket.recvfrom(1048576)
-				# log.debug("Received " + str(len(received)) + " bytes from" + str(sender))
 				self.__benchmark_bytes_received += len(received)
+				
+				log.debug(
+					"Received " + str(len(received)) + " bytes from" + str(sender)
+					+ "; Total = " + str(self.__benchmark_bytes_received)
+				)
+				
 			else:
 				time.sleep(.001)
 	
@@ -96,6 +114,7 @@ class VideoClient:
 		log.info("Begin leech loops")
 		
 		self.start_benchmark()
+		self.init_data_receiver()
 		while self.__benchmark_bytes_received < wanted_bytes:
 			
 			if not self.socket_has_data():
@@ -111,11 +130,11 @@ class VideoClient:
 	
 	def ask_server_for_data(self):
 		
-		log = self.__logger.get()
+		# log = self.__logger.get()
 		
-		log.debug("Asking server for data: " + str(self.__server_host) + "::" + str(self.__server_port))
+		# log.debug("Asking server for data: " + str(self.__server_host) + "::" + str(self.__server_port))
 		self.__socket.sendto(self.__beg_string, (self.__server_host, self.__server_port))
-		log.debug("Done asking server for data")
+		# log.debug("Done asking server for data")
 		
 	def socket_has_data(self):
 		
@@ -145,6 +164,7 @@ class VideoClient:
 	
 	def start_benchmark(self):
 		
+		self.__benchmark_is_running = True
 		self.__benchmark_start_time = self.timestamp_millis()
 		self.__benchmark_end_time = self.__benchmark_start_time
 		self.__benchmark_elapsed_time = 0
@@ -153,8 +173,9 @@ class VideoClient:
 	
 	def stop_benchmark(self):
 		
-		log = self.__logger.get()
+		# log = self.__logger.get()
 		
+		self.__benchmark_is_running = False
 		self.__benchmark_end_time = self.timestamp_millis()
 		
 		self.__benchmark_elapsed_time = (

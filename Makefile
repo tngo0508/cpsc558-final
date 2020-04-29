@@ -34,6 +34,9 @@ UBUNTU_VM_REPO_DIR := /root/Documents/cpsc558-repo
 # Render dir
 UBUNTU_VM_RENDER_DIR := $(UBUNTU_VM_REPO_DIR)/render
 
+# Logs dir
+UBUNTU_VM_LOG_DIR := $(UBUNTU_VM_REPO_DIR)/log
+
 # Topology image
 UBUNTU_VM_TOPOLOGY_IMAGE := $(UBUNTU_VM_RENDER_DIR)/topology.png
 
@@ -42,7 +45,7 @@ UBUNTU_VM_TOPOLOGY_IMAGE := $(UBUNTU_VM_RENDER_DIR)/topology.png
 
 #
 LOCAL_RENDER_DIR := $(MAKEFILE_DIR)/render
-
+LOCAL_LOG_DIR := $(MAKEFILE_DIR)/log
 
 default:	menu
 
@@ -59,20 +62,18 @@ menu:
 	@echo "make topo              ===> Run a test build of the topology"
 	@echo "make run               ===> Run all our tests and stuff"
 	@echo
-	@echo "*** OpenFlow Controllers ***"
-	@echo "(probably delete this section because it doesn't appear we need to start controllers seperately)"
-	@echo "One of the following controllers must be running before our main program can execute."
-	@echo "Each of these targets controls how our central \"switch\" behaves."
-	@echo
-	@echo "make hub               ===> Start a dumb hub controller"
-	@echo "make simple-switch     ===> Start a simple switch controller (Ryu, OpenFlow)"
-	@echo
 
 
 #
 $(LOCAL_RENDER_DIR):
 	$(call say,Ensuring: $@)
 	mkdir --parents "$@"
+
+
+$(LOCAL_LOG_DIR):
+	$(call say,Ensuring: $@)
+	mkdir --parents "$@"
+
 
 
 #	Deploy this repo into the Mininet VM
@@ -108,31 +109,29 @@ topology:	clean-mininet-state | $(LOCAL_RENDER_DIR)
 .PHONY:	topo topology
 
 
-#	Run our tests and stuff
+# Run our tests and stuff
 run:	deploy
 run:	clean-mininet-state |
 	$(call say,Running our tests and stuff)
-	ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run"
+	ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && make clean-logs" \
+		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run" \
+		&& $(MAKE) pull-logs
 .PHONY:	run
 
 
-#	Start Ryu dumb hub controller
-hub:		dumb-hub
-dumb-hub:	deploy
-dumb-hub:	|
-	$(call say,Launching dumb-hub controller (RYU))
-	ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ryu-manager DumbHub.py"
-.PHONY:	dumb-hub
+# Pull logs from the remote server
+pull-logs:	|	$(LOCAL_LOG_DIR)
+	$(call say,Pulling logs)
+	rsync \
+		--archive --delete \
+		--stats --itemize-changes --human-readable --verbose --progress \
+ 		"$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)":"$(UBUNTU_VM_LOG_DIR)"/ "$(LOCAL_LOG_DIR)"/
+.PHONY: pull-logs
 
 
-#	Start Ryu simple switch controller
-simple-switch:	deploy
-simple-switch:	|
-	$(call say,Launching simple switch controller (RYU))
-	ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ryu-manager SimpleSwitch"
-.PHONY:	simple-switch
-
-
-
-
+# Pull logs from the remote server
+clean-logs:	|	$(LOCAL_LOG_DIR)
+	$(call say,Cleaning logs)
+	-rm "$(LOCAL_LOG_DIR)"/* -v
+.PHONY: clean-logs
 

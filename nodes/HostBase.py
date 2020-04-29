@@ -16,7 +16,7 @@ class HostBase(mininet_host):
 		
 		super(HostBase, self).__init__(host.name)
 		
-		self.__logger = Logger("Host: " + host.name)
+		self.__logger = Logger("Host: " + host.name, host.name)
 		
 		self.__net = net
 		self.__topology = topology

@@ -19,9 +19,6 @@ class Topology(Topo):
 	
 	"""
 	Topology initializer for CPSC 558 Final Project
-	Mike Peralta
-	Thomas Ngo
-	Andy ???
 	"""
 	
 	__net = None

@@ -18,7 +18,7 @@ class CPSC558FinalProject:
 	
 	def __init__(self):
 		
-		self.__logger = Logger("558 Final Project")
+		self.__logger = Logger("558 Final Project", __name__)
 		
 		self.__net = None  # Mininet
 		self.__topo = None
@@ -36,16 +36,31 @@ class CPSC558FinalProject:
 		log.info("Rendering graph of current topology")
 		self.__topo.render_dotgraph()
 		
-		controller = Ryu('ryu_dumb_hub', 'DumbHubController.py')
-		# controller = Ryu('ryu_demo_switch', 'Demo_SimpleSwitch.py')
+		# Instantiate some controllers to run with
+		controllers = dict({
+			"Demo Switch": Ryu('ryu_demo_switch', 'controllers/Demo_SimpleSwitch.py')  # ,
+			# "Dumb Hub": Ryu('ryu_dumb_hub', 'DumbHubController.py'),
+			# "Simple Switch": Ryu('ryu_dumb_hub', 'DumbHubController.py'),
+			# "QoS Switch": Ryu('ryu_dumb_hub', 'DumbHubController.py'),
+		})
+		
+		# Run with each controller
+		for controller_name in controllers.keys():
+			self.__logger.heading("Running test with: " + controller_name)
+			self.run_with_controller(controllers[controller_name])
+		
+		#
+		log.info("Done running main project")
+	
+	def run_with_controller(self, controller):
+		
+		log = self.__logger.get()
 		
 		log.info("Instantiating Mininet")
+		
 		self.__net = Mininet(
 			topo=self.__topo,
-			# controller=mininet.node.RemoteController,
-			# controller=DumbHubController,
-			# controller=mininet.node.Controller,
-			controller = controller,
+			controller=controller,
 			waitConnected=True
 		)
 		self.__topo.set_net(self.__net)
@@ -59,14 +74,12 @@ class CPSC558FinalProject:
 		self.ping_all()
 		
 		# Begin video traffic
-		self.start_video_traffic()
+		self.start_video_traffic(True)
 		
 		#
 		# self.__net.interact()
-		time.sleep(60000)
-		
-		#
-		log.info("Done!")
+		# self.wait_for_hosts_to_finish()
+		time.sleep(30)
 	
 	def do_topology_test(self):
 		
@@ -89,26 +102,12 @@ class CPSC558FinalProject:
 		
 		log.info("Done!")
 	
-	def init_dumb_hub(self):
-	
-		# DumbHub()
-		pass
-	
 	def ping_all(self):
 		
 		self.__logger.get().info("Attempting to ping between all nodes")
 		self.__net.pingAll(timeout=1)
+		print()
 		self.__logger.get().info("Done pinging between all nodes")
-	
-	def run_dumb_hub(self):
-		
-		log = self.__logger.get()
-		log.info("Running dumb hub controller (Ryu)")
-	
-	def run_simple_switch(self):
-		
-		log = self.__logger.get()
-		log.info("Running simple switch controller (Ryu)")
 	
 	@staticmethod
 	def make_process_stdout_file_path(file_name, clear=True):
@@ -131,24 +130,52 @@ class CPSC558FinalProject:
 		
 		return file_path
 	
-	def start_video_traffic(self):
+	def start_video_traffic(self, use_log: bool = True):
 		
 		log = self.__logger.get()
 		
 		log.info("Starting video traffic")
 		
-		server_log_file = self.make_process_stdout_file_path("video-server")
-		client_log_file = self.make_process_stdout_file_path("video-clients")
+		server_log_file = self.make_process_stdout_file_path("video-server-stdout")
+		log.info(server_log_file)
+		client_log_file = self.make_process_stdout_file_path("video-clients-stdout")
+		log.info(client_log_file)
 		
-		# Start server
+		# Create video server instance
 		server = self.__topo.get_video_server_instance()
-		server.cmd("ifconfig | grep eth >> " + server_log_file + " 2>&1")
-		server.sendCmd("./main.py --video-server >> " + server_log_file + " 2>&1")
 		
-		# Start clients
+		# Start video server
+		if use_log:
+			server.cmd("ifconfig | grep eth >> " + server_log_file + " 2>&1")
+			server.sendCmd("./main.py --video-server --name " + str(server) + " >> " + server_log_file + " 2>&1")
+		else:
+			server.cmd("ifconfig | grep eth 2>&1")
+			server.sendCmd("./main.py --video-server --name " + str(server) + " 2>&1")
+		
+		# Instantiate clients
 		clients = list(self.__topo.get_video_client_instances().values())
+		
+		# Start each client
 		for client in clients:
-			client.cmd("ifconfig | grep eth >> " + client_log_file + " 2>&1")
-			client.sendCmd("./main.py --video-client >> " + client_log_file + " 2>&1")
+			
+			if use_log:
+				client.cmd("ifconfig | grep eth >> " + client_log_file + " 2>&1")
+				client.sendCmd("./main.py --video-client --name " + str(client) + " >> " + client_log_file + " 2>&1")
+			else:
+				client.cmd("ifconfig | grep eth 2>&1")
+				client.sendCmd("./main.py --video-client --name " + str(client) + " 2>&1")
 		
 		log.info("Done starting video traffic")
+	
+	def wait_for_hosts_to_finish(self):
+		
+		log = self.__logger.get()
+		
+		log.info("Start waiting for all hosts to finish")
+		
+		for host in self.__net.hosts:
+			log.info("Waiting for host " + str(host) + " to finish its command")
+			host.waitOutput(verbose=True)
+			log.info("Host " + str(host) + " has finished its command")
+		
+		log.info("Done waiting for all hosts to finish")

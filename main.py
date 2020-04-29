@@ -17,25 +17,19 @@ def consume_arguments():
 	)
 	
 	parser.add_argument(
+		"--name",
+		required=False,
+		dest="name",
+		help="Set a name for this instance. Helpful for node programs.",
+		default=None
+	)
+	
+	parser.add_argument(
 		"--topology", "--topo",
 		required=False,
 		action="store_true",
 		dest="topology",
 		help="Run a quick topology test and render to dot graph with graphviz"
-	)
-	
-	parser.add_argument(
-		"--dumb-hub", "--hub",
-		required=False,
-		action="store_true",
-		dest="dumb_hub"
-	)
-	
-	parser.add_argument(
-		"--simple-switch",
-		required=False,
-		action="store_true",
-		dest="simple_switch"
 	)
 	
 	parser.add_argument(
@@ -73,17 +67,13 @@ def main():
 	
 	if args.run:
 		fp.run()
-	elif args.simple_switch:
-		fp.run_simple_switch()
-	elif args.dumb_hub:
-		fp.run_dumb_hub()
 	elif args.topology:
 		fp.do_topology_test()
 	elif args.video_server:
-		v = VideoServer()
+		v = VideoServer(args.name)
 		v.run()
 	elif args.video_client:
-		v = VideoClient()
+		v = VideoClient(args.name)
 		v.run()
 	else:
 		raise Exception("Don't really know what to do. Use --help switch for more information")

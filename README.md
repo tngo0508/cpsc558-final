@@ -26,9 +26,7 @@ Essentially, you'd need to go through the following steps:
 5. Open a terminal and execute ```$ make``` to see a list of available make shortcuts
 6. Instruct the Ubuntu 16 VM to install updates and build Mininet from source for Python 3 with:
 
-    ```bash
-    $ make setup-ubuntu-vm
-    ```
+    ```$ make setup-ubuntu-vm```
 
 7. Wait endlessly. Maybe watch a show or call a friend.
     

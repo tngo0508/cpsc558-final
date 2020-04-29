@@ -119,6 +119,17 @@ A basic procedure is as follows:
     * Execute the make recipe to run the topology test: ```make topo```
     * Execute the make recipe to run all other tests: ```make run```
 
+## Team Instructions
+
+Mostly we can follow the ***Professor Instructions*** above.
+This section is only for extra helpful information.
+
+Your host machine will send commands to the Ubuntu 16 VM over SSH. Before the Ubuntu 16 VM will accept commands from your host machine, you'll need to make sure the VM's *root* account is setup properly. This means one of either:
+1. Setting up a password for the root account, if you're okay entering that password for each command/test.
+2. Setting up password SSH logins for the root account, if you'd like more seamless execution.
+
+Here's a tutorial for enabling root login over SSH:
+https://linuxconfig.org/enable-ssh-root-login-on-ubuntu-16-04-xenial-xerus-linux-server-desktop
 
 
 

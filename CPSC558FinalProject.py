@@ -78,8 +78,7 @@ class CPSC558FinalProject:
 		
 		#
 		# self.__net.interact()
-		# self.wait_for_hosts_to_finish()
-		time.sleep(30)
+		self.wait_for_hosts_to_finish()
 	
 	def do_topology_test(self):
 		
@@ -173,7 +172,15 @@ class CPSC558FinalProject:
 		
 		log.info("Start waiting for all hosts to finish")
 		
-		for host in self.__net.hosts:
+		# Gather all hosts to wait for
+		hosts_to_wait_for = list()
+		for host_name in self.__topo.get_video_client_instances():
+			hosts_to_wait_for.append(self.__net.nameToNode[host_name])
+		for host_name in self.__topo.get_file_client_instances():
+			hosts_to_wait_for.append(self.__net.nameToNode[host_name])
+		
+		# Wait for all the hosts
+		for host in hosts_to_wait_for:
 			log.info("Waiting for host " + str(host) + " to finish its command")
 			host.waitOutput(verbose=True)
 			log.info("Host " + str(host) + " has finished its command")

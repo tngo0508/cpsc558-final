@@ -286,6 +286,10 @@ class Topology(Topo):
 		#
 		log.info("Done consuming instances")
 	
+	def get_file_client_instances(self):
+		
+		return self.__file_client_instances
+	
 	def get_video_client_instances(self):
 	
 		return self.__video_client_instances

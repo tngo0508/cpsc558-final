@@ -128,9 +128,13 @@ Your host machine will send commands to the Ubuntu 16 VM over SSH. Before the Ub
 1. Setting up a password for the root account, if you're okay entering that password for each command/test.
 2. Setting up password SSH logins for the root account, if you'd like more seamless execution.
 
+Here's a tutorial for setting root's password:
+https://www.cyberciti.biz/faq/change-root-password-ubuntu-linux/
+
 Here's a tutorial for enabling root login over SSH:
 https://linuxconfig.org/enable-ssh-root-login-on-ubuntu-16-04-xenial-xerus-linux-server-desktop
 
-
+Here is some discussion related to enabling SSH keys (passwordless login) to the root account:
+https://askubuntu.com/questions/115151/how-to-set-up-passwordless-ssh-access-for-root-user
 
 

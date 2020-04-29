@@ -11,6 +11,11 @@ Our final project repo. Woot.
 
 First, you can use the command ```make``` in the root of this repo for a list of commands that GNU Make will help you run.
 
+You will use your host machine to control your VM.
+All changes will be made to the remote VM,
+    and all changes will be run there as well.
+No changes or tests will be performed on your host machine.
+
 Essentially, you'd need to go through the following steps:
 
 1. Setup a fresh Ubuntu 16.04 VM (Sorry !!!)

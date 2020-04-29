@@ -9,16 +9,20 @@ class Logger:
 	
 	__DEFAULT_LOGGER_NAME = "UNNAMED LOGGER!"
 	
-	def __init__(self, name=None, log_name=None):
+	def __init__(self, group=None, log_name=None, label=None):
 		
 		"""Recycled from other personal repos"""
 		
-		if name is None:
-			name = self.__DEFAULT_LOGGER_NAME
-		if log_name is None:
-			raise Exception("Poop")
+		if group is None:
+			raise Exception("Need the group")
 		
-		self.__logger = logging.getLogger(name)
+		if log_name is None:
+			raise Exception("Need the name")
+		
+		if label is None:
+			raise Exception("Need the label")
+		
+		self.__logger = logging.getLogger(label)
 		self.__logger.setLevel(logging.DEBUG)
 		
 		self.__logger_formatter = logging.Formatter(
@@ -32,11 +36,19 @@ class Logger:
 		self.__logger.addHandler(self.__logger_console_handler)
 		
 		# Output to file
-		log_file_name = os.path.join(
+		log_file_dir = os.path.join(
 			os.path.dirname(__file__),
 			"log",
+			group
+		)
+		log_file_name = os.path.join(
+			log_file_dir,
 			log_name + ".txt"
 		)
+		try:
+			os.makedirs(log_file_dir)
+		except FileExistsError:
+			pass
 		self.__logger_file_handler = logging.FileHandler(log_file_name, mode='w')
 		self.__logger.addHandler(self.__logger_file_handler)
 		

@@ -35,14 +35,18 @@ class VideoClient:
 	__benchmark_bytes_per_second = 0
 	__benchmark_megabites_per_second = 0
 	
-	def __init__(self, name=None, host=None, port=None):
+	def __init__(self, run_name, name, host=None, port=None):
 		
 		my_ip = subprocess.check_output(["hostname", "-I"]).decode().strip()
 		
 		if name is None:
 			name = my_ip
 		
-		self.__logger = Logger("VideoClient " + my_ip, name)
+		self.__logger = Logger(
+			group=run_name,
+			log_name=name,
+			label="VideoClient"
+		)
 		
 		if host is None:
 			host = self.__default_server_host

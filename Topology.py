@@ -273,7 +273,7 @@ class Topology(Topo):
 		# Grab file client instances
 		self.__file_client_instances = dict()
 		for name in self.__file_client_names:
-			self.__file_client_instances[name] = FileClient(self.__net, self, self.__net.nameToNode[name])
+			self.__file_client_instances[name] = self.__net.nameToNode[name]
 		
 		# Grab video client instances
 		self.__video_client_instances = dict()
@@ -281,7 +281,7 @@ class Topology(Topo):
 			self.__video_client_instances[name] = self.__net.nameToNode[name]
 		
 		# Grab tattle tail
-		self.__tattle_tail_instance = TattleTail(self.__net, self, self.__net.nameToNode[self.__tattle_tail_name])
+		self.__tattle_tail_instance = self.__net.nameToNode[self.__tattle_tail_name]
 		
 		#
 		log.info("Done consuming instances")

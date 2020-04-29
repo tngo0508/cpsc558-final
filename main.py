@@ -25,6 +25,14 @@ def consume_arguments():
 	)
 	
 	parser.add_argument(
+		"--run-name",
+		required=False,
+		dest="run_name",
+		help="Set a name for this particular run (helps logging)",
+		default=None
+	)
+	
+	parser.add_argument(
 		"--topology", "--topo",
 		required=False,
 		action="store_true",
@@ -63,17 +71,17 @@ def main():
 	
 	args = consume_arguments()
 	
-	fp = CPSC558FinalProject()
-	
 	if args.run:
+		fp = CPSC558FinalProject()
 		fp.run()
 	elif args.topology:
+		fp = CPSC558FinalProject()
 		fp.do_topology_test()
 	elif args.video_server:
-		v = VideoServer(args.name)
+		v = VideoServer(run_name=args.run_name, name=args.name)
 		v.run()
 	elif args.video_client:
-		v = VideoClient(args.name)
+		v = VideoClient(run_name=args.run_name, name=args.name)
 		v.run()
 	else:
 		raise Exception("Don't really know what to do. Use --help switch for more information")

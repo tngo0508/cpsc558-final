@@ -16,7 +16,7 @@ class ServerBase:
 	
 	__socket = None
 	
-	def __init__(self, name, socket_type, bind_address, listen_port):
+	def __init__(self, run_name, name, socket_type, bind_address, listen_port):
 		
 		if bind_address is None:
 			bind_address = self.__default_bind_address
@@ -27,9 +27,9 @@ class ServerBase:
 		
 		my_ip = subprocess.check_output(["hostname", "-I"]).decode().strip()
 		self.__logger = Logger(
-			"Server " + my_ip + "::" + str(listen_port)
-			+ "(" + self.socket_type_to_string() + ")",
-			name
+			group=run_name,
+			log_name=name,
+			label="Server " + my_ip + "::" + str(listen_port) + "(" + self.socket_type_to_string() + ")"
 		)
 		
 		self.start_listening()

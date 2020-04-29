@@ -132,6 +132,6 @@ pull-logs:	|	$(LOCAL_LOG_DIR)
 # Pull logs from the remote server
 clean-logs:	|	$(LOCAL_LOG_DIR)
 	$(call say,Cleaning logs)
-	-rm "$(LOCAL_LOG_DIR)"/* -v
+	-rm "$(LOCAL_LOG_DIR)"/* -vr
 .PHONY: clean-logs
 

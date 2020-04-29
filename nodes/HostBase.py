@@ -12,11 +12,15 @@ class HostBase(mininet_host):
 	__topology = None
 	__host = None
 	
-	def __init__(self, net: Mininet, topology: Topo, host: mininet_host):
+	def __init__(self, run_name, net: Mininet, topology: Topo, host: mininet_host):
 		
 		super(HostBase, self).__init__(host.name)
 		
-		self.__logger = Logger("Host: " + host.name, host.name)
+		self.__logger = Logger(
+			group=run_name,
+			log_name=host.name,
+			label="Host: " + host.name
+		)
 		
 		self.__net = net
 		self.__topology = topology

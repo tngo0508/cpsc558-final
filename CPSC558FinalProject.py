@@ -16,9 +16,15 @@ import time
 
 class CPSC558FinalProject:
 	
+	__DEFAULT_RUN_NAME = "main"
+	
 	def __init__(self):
 		
-		self.__logger = Logger("558 Final Project", __name__)
+		self.__logger = Logger(
+			group=self.__DEFAULT_RUN_NAME,
+			log_name=__name__,
+			label="558 Final Project"
+		)
 		
 		self.__net = None  # Mininet
 		self.__topo = None
@@ -39,7 +45,8 @@ class CPSC558FinalProject:
 		# Instantiate some controllers to run with
 		controllers = dict({
 			"Demo Switch": Ryu('ryu_demo_switch', 'controllers/Demo_SimpleSwitch.py')  # ,
-			# "Dumb Hub": Ryu('ryu_dumb_hub', 'DumbHubController.py'),
+			# "Dumb Hub": Ryu('ryu_dumb_hub', 'controllers/DumbHub.py')
+			
 			# "Simple Switch": Ryu('ryu_dumb_hub', 'DumbHubController.py'),
 			# "QoS Switch": Ryu('ryu_dumb_hub', 'DumbHubController.py'),
 		})
@@ -47,12 +54,12 @@ class CPSC558FinalProject:
 		# Run with each controller
 		for controller_name in controllers.keys():
 			self.__logger.heading("Running test with: " + controller_name)
-			self.run_with_controller(controllers[controller_name])
+			self.run_with_controller(controller_name, controllers[controller_name])
 		
 		#
 		log.info("Done running main project")
 	
-	def run_with_controller(self, controller):
+	def run_with_controller(self, controller_name, controller):
 		
 		log = self.__logger.get()
 		
@@ -74,7 +81,7 @@ class CPSC558FinalProject:
 		self.ping_all()
 		
 		# Begin video traffic
-		self.start_video_traffic(True)
+		self.start_video_traffic(controller_name, True)
 		
 		#
 		# self.__net.interact()
@@ -109,11 +116,12 @@ class CPSC558FinalProject:
 		self.__logger.get().info("Done pinging between all nodes")
 	
 	@staticmethod
-	def make_process_stdout_file_path(file_name, clear=True):
+	def make_process_stdout_file_path(run_name, file_name, clear=True):
 		
 		output_dir = os.path.join(
 			os.path.dirname(__file__),
-			"log"
+			"log",
+			run_name
 		)
 		try:
 			os.makedirs(output_dir)
@@ -129,15 +137,15 @@ class CPSC558FinalProject:
 		
 		return file_path
 	
-	def start_video_traffic(self, use_log: bool = True):
+	def start_video_traffic(self, run_name, use_log: bool = True):
 		
 		log = self.__logger.get()
 		
 		log.info("Starting video traffic")
 		
-		server_log_file = self.make_process_stdout_file_path("video-server-stdout")
+		server_log_file = self.make_process_stdout_file_path(run_name, "video-server-stdout")
 		log.info(server_log_file)
-		client_log_file = self.make_process_stdout_file_path("video-clients-stdout")
+		client_log_file = self.make_process_stdout_file_path(run_name, "video-clients-stdout")
 		log.info(client_log_file)
 		
 		# Create video server instance
@@ -145,11 +153,11 @@ class CPSC558FinalProject:
 		
 		# Start video server
 		if use_log:
-			server.cmd("ifconfig | grep eth >> " + server_log_file + " 2>&1")
-			server.sendCmd("./main.py --video-server --name " + str(server) + " >> " + server_log_file + " 2>&1")
+			server.cmd("ifconfig | grep eth >> \"" + server_log_file + "\" 2>&1")
+			server.sendCmd("./main.py --video-server --run-name \"" + str(run_name) + "\" --name \"" + str(server) + "\" >> \"" + server_log_file + "\" 2>&1")
 		else:
 			server.cmd("ifconfig | grep eth 2>&1")
-			server.sendCmd("./main.py --video-server --name " + str(server) + " 2>&1")
+			server.sendCmd("./main.py --video-server --run-name \"" + str(run_name) + "\" --name \"" + str(server) + "\" 2>&1")
 		
 		# Instantiate clients
 		clients = list(self.__topo.get_video_client_instances().values())
@@ -158,11 +166,11 @@ class CPSC558FinalProject:
 		for client in clients:
 			
 			if use_log:
-				client.cmd("ifconfig | grep eth >> " + client_log_file + " 2>&1")
-				client.sendCmd("./main.py --video-client --name " + str(client) + " >> " + client_log_file + " 2>&1")
+				client.cmd("ifconfig | grep eth >> \"" + client_log_file + "\" 2>&1")
+				client.sendCmd("./main.py --video-client --run-name \"" + str(run_name) + "\" --name \"" + str(client) + "\" >> \"" + client_log_file + "\" 2>&1")
 			else:
 				client.cmd("ifconfig | grep eth 2>&1")
-				client.sendCmd("./main.py --video-client --name " + str(client) + " 2>&1")
+				client.sendCmd("./main.py --video-client --run-name \"" + str(run_name) + "\" --name \"" + str(client) + "\" 2>&1")
 		
 		log.info("Done starting video traffic")
 	

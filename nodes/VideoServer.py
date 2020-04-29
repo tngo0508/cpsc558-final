@@ -9,9 +9,10 @@ class VideoServer(ServerBase):
 	
 	__listen_port = 8012
 	
-	def __init__(self, name):
+	def __init__(self, run_name, name):
 		
 		super(VideoServer, self).__init__(
+			run_name,
 			name,
 			socket.SOCK_DGRAM, None, self.__listen_port
 		)

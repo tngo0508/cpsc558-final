@@ -28,7 +28,7 @@ Essentially, you'd need to go through the following steps:
 
     ```bash
     $ make setup-ubuntu-vm
-   ```
+    ```
 
 7. Wait endlessly. Maybe watch a show or call a friend.
     

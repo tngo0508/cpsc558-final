@@ -19,11 +19,20 @@ No changes or tests will be performed on your host machine.
 Essentially, you'd need to go through the following steps:
 
 1. Setup a fresh Ubuntu 16.04 VM (Sorry !!!)
+
 2. Make sure the VM can reach the internet, and is reachable by your host machine (we used bridged mode)
+
 3. Setup the root account's password or SSH key so the user on your current machine can SSH into the VM using the root user
+
 4. Set the environment variable UBUNTU_VM_HOST to the IP address or hostname of your Ubuntu 16 VM
-    (you'll see Make mention the value it's reading)
+    (you'll see Make mention the value it's reading), with something like:
+    
+    ```export UBUNTU_VM_HOST=192.168.1.x```
+    
+    (where *192.168.1.x* is the IP address of your Ubuntu 16 VM)
+
 5. Open a terminal and execute ```$ make``` to see a list of available make shortcuts
+
 6. Instruct the Ubuntu 16 VM to install updates and build Mininet from source for Python 3 with:
 
     ```$ make setup-ubuntu-vm```

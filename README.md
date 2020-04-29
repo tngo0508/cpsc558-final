@@ -44,6 +44,44 @@ Essentially, you'd need to go through the following steps:
 
 ## General Notes
 
+### Repo Layout
+
+* The ***controllers*** subdirectory contains our Ryu controllers (the main point of this project)
+
+* The ***nodes*** subdirectory contains Python classes that implement functionality of our various nodes, such as:
+    * File Server and Client
+    * Video Server and Client
+    * The Tattle Tail node
+    * Supporting base classes
+
+* The ***scripts*** subdirectory contains misc setup scripts
+
+Of our controllers, we have the following source files:
+
+* *Demo_SimpleSwitch.py* is code ripped directly from a tutorial site, and used as our inspiration. This is ***not*** to be considered our original work, and will not be integrated in the final test run configuration.
+* *DumbHub.py* is a controller implementing a simple hub, that merely broadcasts all packets received. Should hopefully suffer from congestion issues.
+* *SimpleSwitch.py* is one step above the *DumbHub*. It will learn MAC addresses and will maintain a forwarding table that allows it to send traffic only to the most appropriate output port.
+* *QSwitch.py* is one step above the *SimpleSwitch*. It will attempt to prioritize UDP packets over TCP packets.
+
+### Explanation of tests
+
+The tests invoked via ```make run``` are designed to prove our controllers are working as intended.
+Each test will use one of the above controllers, and is named after the controller used.
+
+* The ***DumbHub*** test should show lower aggregate bandwidth than with the SimpleSwitch test.
+    * The File Server/Client nodes should appear to be splitting the bandwidth with the Video Server/Client nodes
+    * There may also be a little slowdown due to congestion / collisions.
+    * The Tattle Tail node should also show that it received quite a bit of broadcasted data
+
+* The ***SimpleSwitch*** test should show higher aggregate bandwidth than with the ***DumbHub*** test.
+    * The File Server/Client nodes sholud not appear to be splitting line bandwidth, but only the max aggregate bandwidth of the switch.
+    * The Tattle Tail node should report very little stray broadcast data as compared with the ***DumbHub*** test.
+
+* The ***QSwitch*** test should generally present the same as the ***SimpleSwitch*** test, with one exception:
+    * The Video Server/Client nodes should show significantly more bandwidth than the File Server/Client nodes.
+
+***TODO*** Come up with some like ... logs and stuff to prove this. Probably sort logs into folders named after tests.
+
 ### Mininet
 
 Mininet seems to be configured for only Python2 by default, and doesn't build correctly on Ubuntu 19.

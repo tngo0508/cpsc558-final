@@ -14,7 +14,7 @@ class VideoClient:
 	
 	# Sorry not sorry
 	__default_server_host = "10.0.0.3"
-	__default_server_port = 8012
+	__default_server_port = 8013
 	
 	#
 	__server_host = None

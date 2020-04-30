@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 
-import argparse
 
 from CPSC558FinalProject import CPSC558FinalProject
 
 from nodes.VideoServer import VideoServer
 from nodes.VideoClient import VideoClient
+
+from nodes.FileServer import FileServer
+from nodes.FileClient import FileClient
+
+
+import argparse
+import os
 
 
 def consume_arguments():
@@ -44,21 +50,47 @@ def consume_arguments():
 		"--run",
 		required=False,
 		action="store_true",
-		dest="run"
+		dest="run",
+		help="Run the full suite of tests"
 	)
 	
 	parser.add_argument(
 		"--video-server",
 		required=False,
 		action="store_true",
-		dest="video_server"
+		dest="video_server",
+		help="Start a video server instance"
 	)
 	
 	parser.add_argument(
 		"--video-client",
 		required=False,
 		action="store_true",
-		dest="video_client"
+		dest="video_client",
+		help="Start a video client instance"
+	)
+	
+	parser.add_argument(
+		"--file-server",
+		required=False,
+		action="store_true",
+		dest="file_server",
+		help="Start a file server instance"
+	)
+	
+	parser.add_argument(
+		"--file-client",
+		required=False,
+		action="store_true",
+		dest="file_client",
+		help="Start a file client instance"
+	)
+	
+	parser.add_argument(
+		"--directory", "--dir",
+		dest="directory",
+		default=None,
+		help="Specify a directory (i.e., for the File Server)"
 	)
 	
 	args = parser.parse_args()
@@ -71,18 +103,38 @@ def main():
 	
 	args = consume_arguments()
 	
+	# Normal run
 	if args.run:
 		fp = CPSC558FinalProject(run_name=args.run_name)
 		fp.run()
+	
+	# Topology test
 	elif args.topology:
 		fp = CPSC558FinalProject(run_name=args.run_name)
 		fp.do_topology_test()
+	
+	# Video server
 	elif args.video_server:
 		v = VideoServer(run_name=args.run_name, name=args.name)
 		v.run()
+	
+	# Video client
 	elif args.video_client:
 		v = VideoClient(run_name=args.run_name, name=args.name)
 		v.run()
+	
+	# File server
+	elif args.file_server:
+		os.chdir(args.directory)
+		f = FileServer(run_name=args.run_name, name=args.name)
+		f.run()
+	
+	# File client
+	elif args.file_client:
+		f = FileClient(run_name=args.run_name, name=args.name)
+		f.run()
+	
+	# Invalid args
 	else:
 		raise Exception("Don't really know what to do. Use --help switch for more information")
 

@@ -43,15 +43,6 @@ class CPSC558FinalProject:
 		
 		log = self.__logger.get()
 		
-		self.__logger.heading("Running test with: " + self.__run_name)
-		
-		log.info("Running main project")
-		
-		log.info("Instantiating custom Topology class")
-		self.__topo = Topology(self.__logger)
-		log.info("Rendering graph of current topology")
-		self.__topo.render_dotgraph()
-		
 		# Instantiate some controllers we can choose to run with
 		controllers = dict({
 			
@@ -60,15 +51,19 @@ class CPSC558FinalProject:
 			"switch": ("Simple Switch", Ryu('ryu_simple_switch', 'controllers/SimpleSwitch.py')),
 			"qswitch": ("QoS Switch", Ryu('ryu_qswitch', 'controllers/QSwitch.py'))
 		})
-		
-		if self.__run_name in controllers.keys():
-			
-			controller_name, controller = controllers[self.__run_name]
-			
-			self.run_with_controller(controller)
-			
-		else:
+		if self.__run_name not in controllers.keys():
 			raise Exception("Invalid run name: " + str(self.__run_name))
+		
+		#
+		controller_name, controller = controllers[self.__run_name]
+		self.__logger.heading("Running with controller: " + controller_name)
+		
+		log.info("Instantiating custom Topology class")
+		self.__topo = Topology(self.__logger)
+		log.info("Rendering graph of current topology")
+		self.__topo.render_dotgraph()
+		
+		self.run_with_controller(controller)
 		
 		#
 		log.info("Done")
@@ -107,6 +102,7 @@ class CPSC558FinalProject:
 		self.ping_all()
 		
 		# Begin node traffic
+		self.start_tattle_tail(True)
 		self.start_file_traffic(True)
 		self.start_video_traffic(True)
 		
@@ -162,6 +158,40 @@ class CPSC558FinalProject:
 			os.unlink(file_path)
 		
 		return file_path
+	
+	def start_tattle_tail(self, use_log: bool = True):
+		
+		log = self.__logger.get()
+		
+		log.info("Starting tattle tail")
+		
+		log_file = self.make_process_stdout_file_path(self.__run_name, "tattle-tail-stdout")
+		log.info(log_file)
+		
+		# Get tattle tail instance
+		tattle = self.__topo.get_tattle_tail_instance()
+		tattle_ip = tattle.IP()
+		log.info("Tattle tail IP is: " + str(tattle_ip))
+		
+		# Start the tattle tail
+		if use_log:
+			tattle.cmd("ifconfig | grep eth >> \"" + log_file + "\" 2>&1")
+			tattle.sendCmd(
+				"./main.py --tattle-tail"
+				+ " --run-name \"" + str(self.__run_name) + "\""
+				+ " --name \"" + str(tattle) + "\""
+				+ " >> \"" + log_file + "\" 2>&1"
+			)
+		else:
+			tattle.cmd("ifconfig | grep eth 2>&1")
+			tattle.sendCmd(
+				"./main.py --tattle-tail"
+				+ " --run-name \"" + str(self.__run_name) + "\""
+				+ " --name \"" + str(tattle) + "\""
+				+ " 2>&1"
+			)
+		
+		log.info("Done starting tattle tail")
 	
 	def start_video_traffic(self, use_log: bool = True):
 		

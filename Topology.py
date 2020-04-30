@@ -172,6 +172,10 @@ class Topology(Topo):
 		
 		return self.__video_server_instance
 	
+	def get_tattle_tail_instance(self):
+		
+		return self.__tattle_tail_instance
+	
 	def render_dotgraph(self, view=False):
 		
 		dot = self.generate_dotgraph()

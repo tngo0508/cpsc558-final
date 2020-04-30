@@ -5,7 +5,8 @@
 .idea/
 log/
 render/
-
-
+.vscode/
+demo/
+__pycache__
 
 

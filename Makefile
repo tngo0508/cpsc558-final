@@ -38,16 +38,26 @@ UBUNTU_VM_RENDER_DIR := $(UBUNTU_VM_REPO_DIR)/render
 # Logs dir
 UBUNTU_VM_LOG_DIR := $(UBUNTU_VM_REPO_DIR)/log
 
+# Data dir
+UBUNTU_VM_DATA_DIR := $(UBUNTU_VM_REPO_DIR)/data
+
 # Topology image
 UBUNTU_VM_TOPOLOGY_IMAGE := $(UBUNTU_VM_RENDER_DIR)/topology.png
 
 ##### Ubuntu 16.04 Virtual Machine
 ##################################
 
+
 #
 LOCAL_RENDER_DIR := $(MAKEFILE_DIR)/render
 LOCAL_LOG_DIR := $(MAKEFILE_DIR)/log
 
+#
+LOCAL_DATA_DIR := $(MAKEFILE_DIR)/data
+LOCAL_FILE_SERVER_DATAFILE := $(LOCAL_DATA_DIR)/random-data.dat
+
+
+#
 default:	menu
 
 menu:
@@ -76,6 +86,16 @@ $(LOCAL_LOG_DIR):
 	mkdir --parents "$@"
 
 
+$(LOCAL_DATA_DIR):
+	$(call say,Ensuring: $@)
+	mkdir --parents "$@"
+
+
+$(LOCAL_FILE_SERVER_DATAFILE):	| $(LOCAL_DATA_DIR)
+	$(call say,Ensuring File Server datafile: $@)
+	dd if=/dev/urandom of="$@" bs=1M count=100 status=progress
+
+
 
 #	Deploy this repo into the Mininet VM
 deploy:
@@ -100,6 +120,13 @@ clean-mininet-state:
 .PHONY: clean-mininet-state
 
 
+#	Ensure the File Server datafile
+ensure-datafiles:
+	$(call say,Ensuring datafiles)
+	$(MAKE) $(LOCAL_FILE_SERVER_DATAFILE)
+.PHONY: ensure-datafiles
+
+
 #	Topology Test
 topo:	deploy
 topo:	topology
@@ -116,6 +143,7 @@ run:	deploy
 run:	clean-mininet-state |
 	$(call say,Running our tests and stuff)
 	ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && make clean-logs" \
+		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && make ensure-datafiles" \
 		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name demo" \
 		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name hub" \
 		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name switch" \

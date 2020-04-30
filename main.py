@@ -9,6 +9,8 @@ from nodes.VideoClient import VideoClient
 from nodes.FileServer import FileServer
 from nodes.FileClient import FileClient
 
+from nodes.TattleTail import TattleTail
+
 
 import argparse
 import os
@@ -87,6 +89,14 @@ def consume_arguments():
 	)
 	
 	parser.add_argument(
+		"--tattle-tail",
+		required=False,
+		action="store_true",
+		dest="tattle_tail",
+		help="Start a tattle tail instance"
+	)
+	
+	parser.add_argument(
 		"--directory", "--dir",
 		dest="directory",
 		default=None,
@@ -140,6 +150,11 @@ def main():
 	elif args.file_client:
 		f = FileClient(run_name=args.run_name, name=args.name, server_host=args.hostname)
 		f.run()
+	
+	# Tattle tail
+	elif args.tattle_tail:
+		t = TattleTail(run_name=args.run_name, name=args.name)
+		t.run()
 	
 	# Invalid args
 	else:

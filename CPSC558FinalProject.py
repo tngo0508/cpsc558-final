@@ -166,14 +166,26 @@ class CPSC558FinalProject:
 		
 		# Get video server instance
 		server = self.__topo.get_video_server_instance()
+		server_ip = server.IP()
+		log.info("Video server IP is: " + str(server_ip))
 		
 		# Start video server
 		if use_log:
 			server.cmd("ifconfig | grep eth >> \"" + server_log_file + "\" 2>&1")
-			server.sendCmd("./main.py --video-server --run-name \"" + str(self.__run_name) + "\" --name \"" + str(server) + "\" >> \"" + server_log_file + "\" 2>&1")
+			server.sendCmd(
+				"./main.py --video-server"
+				+ " --run-name \"" + str(self.__run_name) + "\""
+				+ " --name \"" + str(server) + "\""
+				+ " >> \"" + server_log_file + "\" 2>&1"
+			)
 		else:
 			server.cmd("ifconfig | grep eth 2>&1")
-			server.sendCmd("./main.py --video-server --run-name \"" + str(self.__run_name) + "\" --name \"" + str(server) + "\" 2>&1")
+			server.sendCmd(
+				"./main.py --video-server"
+				+ " --run-name \"" + str(self.__run_name) + "\""
+				+ " --name \"" + str(server) + "\""
+				+ " 2>&1"
+			)
 		
 		# Instantiate clients
 		clients = list(self.__topo.get_video_client_instances().values())
@@ -183,10 +195,22 @@ class CPSC558FinalProject:
 			
 			if use_log:
 				client.cmd("ifconfig | grep eth >> \"" + client_log_file + "\" 2>&1")
-				client.sendCmd("./main.py --video-client --run-name \"" + str(self.__run_name) + "\" --name \"" + str(client) + "\" >> \"" + client_log_file + "\" 2>&1")
+				client.sendCmd(
+					"./main.py --video-client"
+					+ " --run-name \"" + str(self.__run_name) + "\""
+					+ " --name \"" + str(client) + "\""
+					+ " --host \"" + server_ip + "\""
+					+ " >> \"" + client_log_file + "\" 2>&1"
+				)
 			else:
 				client.cmd("ifconfig | grep eth 2>&1")
-				client.sendCmd("./main.py --video-client --run-name \"" + str(self.__run_name) + "\" --name \"" + str(client) + "\" 2>&1")
+				client.sendCmd(
+					"./main.py --video-client"
+					+ " --run-name \"" + str(self.__run_name) + "\""
+					+ " --name \"" + str(client) + "\""
+					+ " --host \"" + server_ip + "\""
+					+ " 2>&1"
+				)
 		
 		log.info("Done starting video traffic")
 	

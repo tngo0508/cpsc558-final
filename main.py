@@ -127,7 +127,7 @@ def main():
 	
 	# Video client
 	elif args.video_client:
-		v = VideoClient(run_name=args.run_name, name=args.name)
+		v = VideoClient(run_name=args.run_name, name=args.name, server_host=args.hostname)
 		v.run()
 	
 	# File server

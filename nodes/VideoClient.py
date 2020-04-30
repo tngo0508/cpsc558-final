@@ -14,7 +14,6 @@ import time
 class VideoClient:
 	
 	# Sorry not sorry
-	__default_server_host = "10.0.0.3"
 	__default_server_port = 8013
 	
 	#
@@ -28,7 +27,7 @@ class VideoClient:
 	__wanted_data_size_megabytes = 100
 	__beg_string = "MOAR PLZ!\n".encode()
 	
-	def __init__(self, run_name, name, host=None, port=None):
+	def __init__(self, run_name, name, server_host=None, server_port=None):
 		
 		my_ip = subprocess.check_output(["hostname", "-I"]).decode().strip()
 		
@@ -41,13 +40,13 @@ class VideoClient:
 			label="VideoClient"
 		)
 		
-		if host is None:
-			host = self.__default_server_host
-		self.__server_host = host
+		if server_host is None:
+			raise Exception("Need to specify server host")
+		self.__server_host = server_host
 		
-		if port is None:
-			port = self.__default_server_port
-		self.__server_port = port
+		if server_port is None:
+			server_port = self.__default_server_port
+		self.__server_port = server_port
 		
 		self.__benchmarker = Benchmarker(name)
 		

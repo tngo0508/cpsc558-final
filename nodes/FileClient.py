@@ -5,7 +5,6 @@ from Benchmarker import Benchmarker
 
 
 import requests
-from requests.adapters import HTTPAdapter
 import subprocess
 
 
@@ -50,7 +49,9 @@ class FileClient:
 		
 		self.__benchmarker.start()
 		
+		success = False
 		any_fails = False
+		r = None
 		for i in range(self.__default_request_retries):
 			
 			if any_fails:
@@ -59,10 +60,15 @@ class FileClient:
 			try:
 				log.info("Trying to download url: " + url)
 				r = requests.get(url, timeout=self.__default_request_timeout)
+				success = True
 				break
 			except requests.exceptions.ConnectionError:
 				log.error("Failed to download url: " + url)
 				any_fails = True
+		
+		if not success:
+			log.info("Failed to download url: " + url)
+			return
 		
 		response_data = r.content
 		self.__benchmarker.set_bytes_received(len(response_data))

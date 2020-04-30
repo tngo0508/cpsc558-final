@@ -1,9 +1,11 @@
 
 
 from Logger import Logger
+from Benchmarker import Benchmarker
 
 
 import requests
+from requests.adapters import HTTPAdapter
 import subprocess
 
 
@@ -35,6 +37,8 @@ class FileClient:
 		if server_port is None:
 			server_port = self.__default_server_port
 		self.__server_port = server_port
+		
+		self.__benchmarker = Benchmarker(name)
 	
 	def run(self):
 	
@@ -44,6 +48,13 @@ class FileClient:
 		
 		url = "http://" + self.__server_host + ":" + str(self.__server_port) + "/random-data.dat"
 		
+		self.__benchmarker.start()
+		
+		# Allow the requests library to make multiple requests because it seems the server fails sometimes
+		adapter = HTTPAdapter(max_retries=5)
+		http = requests.Session()
+		http.mount("http://", adapter)
+		
 		try:
 			log.info("Trying to download url: " + url)
 			r = requests.get(url, timeout=self.__default_request_timeout)
@@ -52,6 +63,9 @@ class FileClient:
 			return
 		
 		response_data = r.content
-		log.info("Got " + str(len(response_data)) + " bytes of data")
+		self.__benchmarker.set_bytes_received(len(response_data))
+		self.__benchmarker.stop()
+		
+		log.info(self.__benchmarker)
 		
 		log.info("Done!")

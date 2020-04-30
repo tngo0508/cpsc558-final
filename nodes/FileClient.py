@@ -12,11 +12,11 @@ import subprocess
 class FileClient:
 	
 	# Sorry not sorry
-	__default_server_host = "10.0.0.2"
 	__default_server_port = 8012
 	
 	#
 	__default_request_timeout = 5
+	__default_request_retries = 10
 	
 	def __init__(self, run_name=None, name=None, server_host=None, server_port=None):
 		
@@ -31,7 +31,7 @@ class FileClient:
 		)
 		
 		if server_host is None:
-			server_host = self.__default_server_host
+			raise Exception("Please provide a hostname to connect to")
 		self.__server_host = server_host
 		
 		if server_port is None:

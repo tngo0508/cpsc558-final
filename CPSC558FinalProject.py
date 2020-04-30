@@ -164,7 +164,7 @@ class CPSC558FinalProject:
 		client_log_file = self.make_process_stdout_file_path(self.__run_name, "video-clients-stdout")
 		log.info(client_log_file)
 		
-		# Create video server instance
+		# Get video server instance
 		server = self.__topo.get_video_server_instance()
 		
 		# Start video server
@@ -201,8 +201,10 @@ class CPSC558FinalProject:
 		client_log_file = self.make_process_stdout_file_path(self.__run_name, "file-clients-stdout")
 		log.info(client_log_file)
 		
-		# Create file server instance
+		# Get file server instance
 		server = self.__topo.get_file_server_instance()
+		server_ip = server.IP()
+		log.info("File server IP is: " + str(server_ip))
 		
 		# Start file server
 		if use_log:
@@ -236,6 +238,7 @@ class CPSC558FinalProject:
 					"./main.py --file-client"
 					+ " --run-name \"" + str(self.__run_name) + "\""
 					+ " --name \"" + str(client) + "\""
+					+ " --host \"" + server_ip + "\""
 					+ " >> \"" + client_log_file + "\" 2>&1"
 				)
 			else:
@@ -244,6 +247,7 @@ class CPSC558FinalProject:
 					"./main.py --file-client"
 					+ " --run-name \"" + str(self.__run_name) + "\""
 					+ " --name \"" + str(client) + "\""
+					+ " --host \"" + server_ip + "\""
 					+ " 2>&1"
 				)
 		

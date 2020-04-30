@@ -53,14 +53,18 @@ class TattleTail:
 	
 	def snoop_a_loop(self):
 		
+		# Lil help from various sites. Pasting the most recent
+		# https://code-examples.net/en/q/5c94cd
+		
 		# Create a promiscuous socket
 		log = self.__logger.get()
 		
 		log.info("Creating promiscuous socket")
-		sock = socket.socket(socket.AF_PACKET, socket.SOCK_DGRAM)
-		sock.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
+		# sock = socket.socket(socket.AF_PACKET, socket.SOCK_DGRAM)
+		sock = socket.socket(socket.AF_NETLINK, socket.SOCK_DGRAM)
 		
 		# Attempt to receive any data, indefinitely
+		log.info("Begin snooping!")
 		self.__benchmarker.start()
 		while True:
 			

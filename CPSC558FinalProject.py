@@ -7,18 +7,21 @@ from controllers.DumbHub import DumbHub
 
 import mininet
 from mininet.net import Mininet
-from mininet.clean import Cleanup
+from mininet.link import TCIntf
+from mininet.util import custom as mininet_custom
+
 from mininet.node import Ryu
 
 import os
 import sys
-import time
 
 
 class CPSC558FinalProject:
 	
 	__DEFAULT_RUN_NAME = "main"
 	__DEFAULT_FILE_SERVER_DIRECTORY = "data"
+	
+	__BANDWIDTH_LIMIT_MBPS = 100
 	
 	def __init__(self, run_name):
 		
@@ -76,9 +79,16 @@ class CPSC558FinalProject:
 		
 		log.info("Instantiating Mininet")
 		
+		#####
+		# Pulled a snippet from Mininet/examples to limit bandwidth
+		bw_limited_interface = mininet_custom(TCIntf, bw=self.__BANDWIDTH_LIMIT_MBPS)
+		log.info("Using bandwidth limit of: " + str(self.__BANDWIDTH_LIMIT_MBPS) + " mbps")
+		#####
+		
 		self.__net = Mininet(
 			topo=self.__topo,
 			controller=controller,
+			intf=bw_limited_interface,
 			waitConnected=False
 		)
 		self.__topo.set_net(self.__net)

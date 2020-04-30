@@ -15,7 +15,7 @@ class FileClient:
 	
 	#
 	__default_request_timeout = 5
-	__default_request_retries = 10
+	__default_request_retries = 100
 	
 	def __init__(self, run_name=None, name=None, server_host=None, server_port=None):
 		
@@ -55,14 +55,15 @@ class FileClient:
 		for i in range(self.__default_request_retries):
 			
 			if any_fails:
-				log.info("Trying again, I guess ... ")
+				log.info("Trying again, I guess; Attempt #" + str(i + 1) + " ...")
 			
 			try:
 				log.info("Trying to download url: " + url)
 				r = requests.get(url, timeout=self.__default_request_timeout)
+				log.info("Successfully downloaded url")
 				success = True
 				break
-			except requests.exceptions.ConnectionError:
+			except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout, TypeError):
 				log.error("Failed to download url: " + url)
 				any_fails = True
 		

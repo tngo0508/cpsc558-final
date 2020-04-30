@@ -1,5 +1,5 @@
 define say
-	$(info [CPSC558 Final] $1)
+	$(info [CPSC558 Final]($(HOSTNAME)) $1)
 endef
 define die
 	$(error [CPSC558 Final] Fatal $1)
@@ -7,6 +7,7 @@ endef
 
 
 ##
+HOSTNAME := $(shell hostname)
 MAKEFILE_DIR := .
 SCRIPTS_DIR := $(MAKEFILE_DIR)/scripts
 SCRIPT_SETUP_UBUNTU_VM := $(SCRIPTS_DIR)/setup-ubuntu-vm

@@ -1,6 +1,7 @@
 
 
 from Logger import Logger
+from Benchmarker import Benchmarker
 
 
 import select
@@ -27,14 +28,6 @@ class VideoClient:
 	__wanted_data_size_megabytes = 100
 	__beg_string = "MOAR PLZ!\n".encode()
 	
-	__benchmark_is_running = False
-	__benchmark_start_time = 0
-	__benchmark_end_time = 0
-	__benchmark_elapsed_time = 0
-	__benchmark_bytes_received = 0
-	__benchmark_bytes_per_second = 0
-	__benchmark_megabites_per_second = 0
-	
 	def __init__(self, run_name, name, host=None, port=None):
 		
 		my_ip = subprocess.check_output(["hostname", "-I"]).decode().strip()
@@ -55,6 +48,8 @@ class VideoClient:
 		if port is None:
 			port = self.__default_server_port
 		self.__server_port = port
+		
+		self.__benchmarker = Benchmarker(name)
 		
 		# self.__logger.set_verbose(True)
 		
@@ -90,7 +85,7 @@ class VideoClient:
 		
 		log = self.__logger.get()
 		
-		while self.__benchmark_is_running:
+		while self.__benchmarker.is_running():
 			
 			# log.info("Data receiver iteration")
 			
@@ -99,11 +94,11 @@ class VideoClient:
 				# log.info("Receiving ... ")
 				
 				received, sender = self.__socket.recvfrom(1048576)
-				self.__benchmark_bytes_received += len(received)
+				self.__benchmarker.increased_bytes_received(len(received))
 				
 				log.debug(
 					"Received " + str(len(received)) + " bytes from" + str(sender)
-					+ "; Total = " + str(self.__benchmark_bytes_received)
+					+ "; Total = " + str(self.__benchmarker.get_bytes_received())
 				)
 				
 			else:
@@ -117,9 +112,9 @@ class VideoClient:
 		
 		log.info("Begin leech loops")
 		
-		self.start_benchmark()
+		self.__benchmarker.start()
 		self.init_data_receiver()
-		while self.__benchmark_bytes_received < wanted_bytes:
+		while self.__benchmarker.get_bytes_received() < wanted_bytes:
 			
 			if not self.socket_has_data():
 				self.ask_server_for_data()
@@ -128,7 +123,8 @@ class VideoClient:
 			
 			time.sleep(.001)
 		
-		self.stop_benchmark()
+		self.__benchmarker.stop()
+		log.info(self.__benchmarker)
 		
 		log.info("End leech loops")
 	
@@ -165,46 +161,3 @@ class VideoClient:
 			
 			self.__socket.close()
 			self.__socket = None
-	
-	def start_benchmark(self):
-		
-		self.__benchmark_is_running = True
-		self.__benchmark_start_time = self.timestamp_millis()
-		self.__benchmark_end_time = self.__benchmark_start_time
-		self.__benchmark_elapsed_time = 0
-		self.__benchmark_bytes_received = 0
-		self.__benchmark_bytes_per_second = 0
-	
-	def stop_benchmark(self):
-		
-		# log = self.__logger.get()
-		
-		self.__benchmark_is_running = False
-		self.__benchmark_end_time = self.timestamp_millis()
-		
-		self.__benchmark_elapsed_time = (
-			float(self.__benchmark_end_time - self.__benchmark_start_time)
-			/
-			1000.0
-		)
-		
-		# log.info(str(self.__benchmark_start_time))
-		# log.info(str(self.__benchmark_end_time))
-		# log.info(str(self.__benchmark_bytes_received))
-		# log.info(str(self.__benchmark_elapsed_time))
-		self.__benchmark_bytes_per_second = self.__benchmark_bytes_received / self.__benchmark_elapsed_time
-		self.__benchmark_megabites_per_second = (
-			self.__benchmark_bytes_per_second / 131072
-		)
-		
-		self.__logger.get().info(
-			"Benchmark: " + str(self.__benchmark_bytes_received / 1048576) + " megabytes received"
-		)
-		self.__logger.get().info(
-			"Benchmark: " + str(self.__benchmark_megabites_per_second) + " megabits per second"
-		)
-	
-	@staticmethod
-	def timestamp_millis():
-		
-		return time.time() * 1000

@@ -10,8 +10,7 @@ from ryu.controller import ofp_event
 from ryu.controller.handler import set_ev_cls
 from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
-
-from mininet.node import Ryu
+from ryu.ofproto import ofproto_v1_0
 
 
 class DumbHub(app_manager.RyuApp):
@@ -20,7 +19,10 @@ class DumbHub(app_manager.RyuApp):
 	
 	def __init__(self, *args, **kwargs):
 		
-		self.__logger = Logger("DumbHub")
+		self.__logger = Logger(
+			"Controller: " + type(self).__name__,
+			type(self).__name__
+		)
 		
 		super(DumbHub, self).__init__(*args, **kwargs)
 	
@@ -39,8 +41,8 @@ class DumbHub(app_manager.RyuApp):
 		pkt = packet.Packet(msg.data)
 		eth = pkt.get_protocol(ethernet.ethernet)
 		
-		# log.info("Got message: " + str(msg))
-		# log.info("Got datapath: " + str(datapath))
-		# log.info("Got ofproto: " + str(ofproto))
-		# log.info("Got a packet: " + str(pkt))
-		# log.info("Got an ethernet protocol thing: " + str(eth))
+		log.info("Got message: " + str(msg))
+		log.info("Got datapath: " + str(datapath))
+		log.info("Got ofproto: " + str(ofproto))
+		log.info("Got a packet: " + str(pkt))
+		log.info("Got an ethernet protocol thing: " + str(eth))

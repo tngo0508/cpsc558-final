@@ -50,17 +50,19 @@ class FileClient:
 		
 		self.__benchmarker.start()
 		
-		# Allow the requests library to make multiple requests because it seems the server fails sometimes
-		adapter = HTTPAdapter(max_retries=5)
-		http = requests.Session()
-		http.mount("http://", adapter)
-		
-		try:
-			log.info("Trying to download url: " + url)
-			r = requests.get(url, timeout=self.__default_request_timeout)
-		except requests.exceptions.ConnectionError:
-			log.error("Failed to download url: " + url)
-			return
+		any_fails = False
+		for i in range(self.__default_request_retries):
+			
+			if any_fails:
+				log.info("Trying again, I guess ... ")
+			
+			try:
+				log.info("Trying to download url: " + url)
+				r = requests.get(url, timeout=self.__default_request_timeout)
+				break
+			except requests.exceptions.ConnectionError:
+				log.error("Failed to download url: " + url)
+				any_fails = True
 		
 		response_data = r.content
 		self.__benchmarker.set_bytes_received(len(response_data))

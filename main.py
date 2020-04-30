@@ -93,6 +93,13 @@ def consume_arguments():
 		help="Specify a directory (i.e., for the File Server)"
 	)
 	
+	parser.add_argument(
+		"--hostname", "--host",
+		dest="hostname",
+		default=None,
+		help="Specify a hostname (i.e., for clients to connect to)"
+	)
+	
 	args = parser.parse_args()
 	
 	return args
@@ -120,7 +127,7 @@ def main():
 	
 	# Video client
 	elif args.video_client:
-		v = VideoClient(run_name=args.run_name, name=args.name)
+		v = VideoClient(run_name=args.run_name, name=args.name, server_host=args.hostname)
 		v.run()
 	
 	# File server
@@ -131,7 +138,7 @@ def main():
 	
 	# File client
 	elif args.file_client:
-		f = FileClient(run_name=args.run_name, name=args.name)
+		f = FileClient(run_name=args.run_name, name=args.name, server_host=args.hostname)
 		f.run()
 	
 	# Invalid args

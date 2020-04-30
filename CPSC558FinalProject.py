@@ -7,18 +7,21 @@ from controllers.DumbHub import DumbHub
 
 import mininet
 from mininet.net import Mininet
-from mininet.clean import Cleanup
+from mininet.link import TCIntf
+from mininet.util import custom as mininet_custom
+
 from mininet.node import Ryu
 
 import os
 import sys
-import time
 
 
 class CPSC558FinalProject:
 	
 	__DEFAULT_RUN_NAME = "main"
 	__DEFAULT_FILE_SERVER_DIRECTORY = "data"
+	
+	__BANDWIDTH_LIMIT_MBPS = 100
 	
 	def __init__(self, run_name):
 		
@@ -76,9 +79,16 @@ class CPSC558FinalProject:
 		
 		log.info("Instantiating Mininet")
 		
+		#####
+		# Pulled a snippet from Mininet/examples to limit bandwidth
+		bw_limited_interface = mininet_custom(TCIntf, bw=self.__BANDWIDTH_LIMIT_MBPS)
+		log.info("Using bandwidth limit of: " + str(self.__BANDWIDTH_LIMIT_MBPS) + " mbps")
+		#####
+		
 		self.__net = Mininet(
 			topo=self.__topo,
 			controller=controller,
+			intf=bw_limited_interface,
 			waitConnected=False
 		)
 		self.__topo.set_net(self.__net)
@@ -164,16 +174,28 @@ class CPSC558FinalProject:
 		client_log_file = self.make_process_stdout_file_path(self.__run_name, "video-clients-stdout")
 		log.info(client_log_file)
 		
-		# Create video server instance
+		# Get video server instance
 		server = self.__topo.get_video_server_instance()
+		server_ip = server.IP()
+		log.info("Video server IP is: " + str(server_ip))
 		
 		# Start video server
 		if use_log:
 			server.cmd("ifconfig | grep eth >> \"" + server_log_file + "\" 2>&1")
-			server.sendCmd("./main.py --video-server --run-name \"" + str(self.__run_name) + "\" --name \"" + str(server) + "\" >> \"" + server_log_file + "\" 2>&1")
+			server.sendCmd(
+				"./main.py --video-server"
+				+ " --run-name \"" + str(self.__run_name) + "\""
+				+ " --name \"" + str(server) + "\""
+				+ " >> \"" + server_log_file + "\" 2>&1"
+			)
 		else:
 			server.cmd("ifconfig | grep eth 2>&1")
-			server.sendCmd("./main.py --video-server --run-name \"" + str(self.__run_name) + "\" --name \"" + str(server) + "\" 2>&1")
+			server.sendCmd(
+				"./main.py --video-server"
+				+ " --run-name \"" + str(self.__run_name) + "\""
+				+ " --name \"" + str(server) + "\""
+				+ " 2>&1"
+			)
 		
 		# Instantiate clients
 		clients = list(self.__topo.get_video_client_instances().values())
@@ -183,10 +205,22 @@ class CPSC558FinalProject:
 			
 			if use_log:
 				client.cmd("ifconfig | grep eth >> \"" + client_log_file + "\" 2>&1")
-				client.sendCmd("./main.py --video-client --run-name \"" + str(self.__run_name) + "\" --name \"" + str(client) + "\" >> \"" + client_log_file + "\" 2>&1")
+				client.sendCmd(
+					"./main.py --video-client"
+					+ " --run-name \"" + str(self.__run_name) + "\""
+					+ " --name \"" + str(client) + "\""
+					+ " --host \"" + server_ip + "\""
+					+ " >> \"" + client_log_file + "\" 2>&1"
+				)
 			else:
 				client.cmd("ifconfig | grep eth 2>&1")
-				client.sendCmd("./main.py --video-client --run-name \"" + str(self.__run_name) + "\" --name \"" + str(client) + "\" 2>&1")
+				client.sendCmd(
+					"./main.py --video-client"
+					+ " --run-name \"" + str(self.__run_name) + "\""
+					+ " --name \"" + str(client) + "\""
+					+ " --host \"" + server_ip + "\""
+					+ " 2>&1"
+				)
 		
 		log.info("Done starting video traffic")
 	
@@ -201,8 +235,10 @@ class CPSC558FinalProject:
 		client_log_file = self.make_process_stdout_file_path(self.__run_name, "file-clients-stdout")
 		log.info(client_log_file)
 		
-		# Create file server instance
+		# Get file server instance
 		server = self.__topo.get_file_server_instance()
+		server_ip = server.IP()
+		log.info("File server IP is: " + str(server_ip))
 		
 		# Start file server
 		if use_log:
@@ -236,6 +272,7 @@ class CPSC558FinalProject:
 					"./main.py --file-client"
 					+ " --run-name \"" + str(self.__run_name) + "\""
 					+ " --name \"" + str(client) + "\""
+					+ " --host \"" + server_ip + "\""
 					+ " >> \"" + client_log_file + "\" 2>&1"
 				)
 			else:
@@ -244,6 +281,7 @@ class CPSC558FinalProject:
 					"./main.py --file-client"
 					+ " --run-name \"" + str(self.__run_name) + "\""
 					+ " --name \"" + str(client) + "\""
+					+ " --host \"" + server_ip + "\""
 					+ " 2>&1"
 				)
 		

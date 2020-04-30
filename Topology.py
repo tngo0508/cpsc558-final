@@ -1,11 +1,6 @@
 
 
 from Logger import Logger
-from nodes.FileServer import FileServer
-from nodes.FileClient import FileClient
-from nodes.VideoServer import VideoServer
-from nodes.VideoClient import VideoClient
-from nodes.TattleTail import TattleTail
 
 import graphviz
 

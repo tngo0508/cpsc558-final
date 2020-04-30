@@ -18,6 +18,7 @@ import time
 class CPSC558FinalProject:
 	
 	__DEFAULT_RUN_NAME = "main"
+	__DEFAULT_FILE_SERVER_DIRECTORY = "data"
 	
 	def __init__(self, run_name):
 		
@@ -95,7 +96,8 @@ class CPSC558FinalProject:
 		# Ping tests
 		self.ping_all()
 		
-		# Begin video traffic
+		# Begin node traffic
+		self.start_file_traffic(True)
 		self.start_video_traffic(True)
 		
 		#
@@ -188,6 +190,65 @@ class CPSC558FinalProject:
 		
 		log.info("Done starting video traffic")
 	
+	def start_file_traffic(self, use_log: bool = True):
+		
+		log = self.__logger.get()
+		
+		log.info("Starting file traffic")
+		
+		server_log_file = self.make_process_stdout_file_path(self.__run_name, "file-server-stdout")
+		log.info(server_log_file)
+		client_log_file = self.make_process_stdout_file_path(self.__run_name, "file-clients-stdout")
+		log.info(client_log_file)
+		
+		# Create file server instance
+		server = self.__topo.get_file_server_instance()
+		
+		# Start file server
+		if use_log:
+			server.cmd("ifconfig | grep eth >> \"" + server_log_file + "\" 2>&1")
+			server.sendCmd(
+				"./main.py --file-server"
+				+ " --run-name \"" + str(self.__run_name) + "\""
+				+ " --name \"" + str(server) + "\""
+				+ " --directory \"" + self.make_file_server_directory() + "\""
+				+ " >> \"" + server_log_file + "\" 2>&1"
+			)
+		else:
+			server.cmd("ifconfig | grep eth 2>&1")
+			server.sendCmd(
+				"./main.py --file-server"
+				+ " --run-name \"" + str(self.__run_name) + "\""
+				+ " --name \"" + str(server) + "\""
+				+ " --directory \"" + self.make_file_server_directory() + "\""
+				+ " 2>&1"
+			)
+		
+		# Instantiate clients
+		clients = list(self.__topo.get_file_client_instances().values())
+		
+		# Start each client
+		for client in clients:
+			
+			if use_log:
+				client.cmd("ifconfig | grep eth >> \"" + client_log_file + "\" 2>&1")
+				client.sendCmd(
+					"./main.py --file-client"
+					+ " --run-name \"" + str(self.__run_name) + "\""
+					+ " --name \"" + str(client) + "\""
+					+ " >> \"" + client_log_file + "\" 2>&1"
+				)
+			else:
+				client.cmd("ifconfig | grep eth 2>&1")
+				client.sendCmd(
+					"./main.py --file-client"
+					+ " --run-name \"" + str(self.__run_name) + "\""
+					+ " --name \"" + str(client) + "\""
+					+ " 2>&1"
+				)
+		
+		log.info("Done starting file traffic")
+	
 	def wait_for_hosts_to_finish(self):
 		
 		log = self.__logger.get()
@@ -208,3 +269,12 @@ class CPSC558FinalProject:
 			log.info("Host " + str(host) + " has finished its command")
 		
 		log.info("Done waiting for all hosts to finish")
+	
+	def make_file_server_directory(self):
+		
+		d = os.path.join(
+			os.path.dirname(__file__),
+			self.__DEFAULT_FILE_SERVER_DIRECTORY
+		)
+		
+		return d

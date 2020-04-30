@@ -7,7 +7,7 @@ import socket
 
 class VideoServer(ServerBase):
 	
-	__listen_port = 8012
+	__listen_port = 8013
 	
 	def __init__(self, run_name, name):
 		

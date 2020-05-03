@@ -10,5 +10,5 @@ render/
 .vscode/
 demo/
 __pycache__
-
+ryu.log
 

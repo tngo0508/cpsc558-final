@@ -21,6 +21,7 @@ class DumbHub(app_manager.RyuApp):
         self.mac_to_port = {}
         self.logger.info('***DumbHub***')
 
+    # function template at https://ryu.readthedocs.io/en/latest/ofproto_v1_3_ref.html#modify-state-messages
     def send_flow_mod(self, datapath, match, actions):
         ofp = datapath.ofproto
         ofp_parser = datapath.ofproto_parser
@@ -44,10 +45,11 @@ class DumbHub(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def dumb_hub_features_handler(self, ev):
+        self.logger.info('****dumb_hub_handler****')
         dp = ev.msg.datapath
         ofproto = dp.ofproto
         ofp_parser = dp.ofproto_parser
-        self.logger.info('****dumb_hub_handler****')
+        
         # self.logger.info(dp)
         # self.logger.info(ofproto)
         # self.logger.info(ofp_parser)
@@ -88,12 +90,15 @@ class DumbHub(app_manager.RyuApp):
         src = eth.src
 
         # in_port = msg.match('in_port')
+        print(msg)
+        in_port = msg.match['in_port']
+        print('in_port' + str(in_port))
 
         dpid = dp.id
         self.mac_to_port.setdefault(dpid, {})
         self.logger.info("packet in %s %s %s", dpid, src, dst)
 
-        # self.mac_to_port[dpid][src] = msg.in_port
+        self.mac_to_port[dpid][src] = in_port
         # out_port = self.mac_to_port[dpid][dst]
 
         # match = dp.ofproto_parser.OFPMatch(
@@ -110,3 +115,11 @@ class DumbHub(app_manager.RyuApp):
         #     datapath=dp, buffer_id=msg.buffer_id, in_port=msg.in_port,
         #     actions=actions)
         # dp.send_msg(out)
+
+        # construct packet_out message and send it.
+        actions = [ofp_parser.OFPActionOutput(ofp.OFPP_FLOOD)]
+        out = ofp_parser.OFPPacketOut(datapath=dp,
+                                  buffer_id=ofp.OFP_NO_BUFFER,
+                                  in_port=in_port, actions=actions,
+                                  data=msg.data)
+        dp.send_msg(out)

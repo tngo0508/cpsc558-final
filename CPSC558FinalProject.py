@@ -35,6 +35,13 @@ class CPSC558FinalProject:
 			label="558 Project"
 		)
 		
+		self.__logger_summary = Logger(
+			group="summary",
+			log_name=__name__,
+			label="558 Project Summary",
+			append=True
+		)
+		
 		self.__net = None  # Mininet
 		self.__topo = None
 		self.__controller = None
@@ -209,9 +216,9 @@ class CPSC558FinalProject:
 		log.info("Starting video traffic")
 		
 		server_log_file = self.make_process_stdout_file_path(self.__run_name, "video-server-stdout")
-		log.info(server_log_file)
+		log.info("Video server stdout: " + server_log_file)
 		client_log_file = self.make_process_stdout_file_path(self.__run_name, "video-clients-stdout")
-		log.info(client_log_file)
+		log.info("Video clients stdout: " + client_log_file)
 		
 		# Get video server instance
 		server = self.__topo.get_video_server_instance()
@@ -270,9 +277,9 @@ class CPSC558FinalProject:
 		log.info("Starting file traffic")
 		
 		server_log_file = self.make_process_stdout_file_path(self.__run_name, "file-server-stdout")
-		log.info(server_log_file)
+		log.info("File server stdout: " + server_log_file)
 		client_log_file = self.make_process_stdout_file_path(self.__run_name, "file-clients-stdout")
-		log.info(client_log_file)
+		log.info("File clients stdout: " + client_log_file)
 		
 		# Get file server instance
 		server = self.__topo.get_file_server_instance()
@@ -363,7 +370,13 @@ class CPSC558FinalProject:
 	def summarize_node_benchmark_logs(self):
 		
 		log = self.__logger.get()
+		log_s = self.__logger_summary.get()
+		
 		log.info("Attempting to summarize node benchmark logs")
+		
+		log_s.info("")
+		log_s.info("*** " + self.__run_name + " ***")
+		log_s.info("Attempting to summarize node benchmark logs")
 		
 		logs_dir = self.__logger.make_log_file_directory_path()
 		log.info("Pulling from log directory: " + logs_dir)
@@ -429,6 +442,10 @@ class CPSC558FinalProject:
 		mbps_average_all = sum(mbps_all_samples) / len(mbps_all_samples)
 		
 		log.info("We seem to have the following aggregate bandwidths:")
+		log_s.info("We seem to have the following aggregate bandwidths:")
 		log.info("File clients: " + str(mbps_average_file) + " mbps")
+		log_s.info("File clients: " + str(mbps_average_file) + " mbps")
 		log.info("Video clients: " + str(mbps_average_video) + " mbps")
+		log_s.info("Video clients: " + str(mbps_average_video) + " mbps")
 		log.info("All clients: " + str(mbps_average_all) + " mbps")
+		log_s.info("All clients: " + str(mbps_average_all) + " mbps")

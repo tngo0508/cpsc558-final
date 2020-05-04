@@ -38,8 +38,7 @@ class SimpleSWitch(app_manager.RyuApp):
     def __init__(self, *args, **kwargs):
 
         super(SimpleSWitch, self).__init__(*args, **kwargs)
-        self.mac_to_port = collections.defaultdict(
-            dict)  # used to learn MAC addr
+        self.mac_to_port = collections.defaultdict()  # used to learn MAC addr
         self.logger.info('***SimpleSWitch***')
 
     # function template at https://ryu.readthedocs.io/en/latest/ofproto_v1_3_ref.html#modify-state-messages
@@ -115,14 +114,13 @@ class SimpleSWitch(app_manager.RyuApp):
         in_port = msg.match['in_port']
         # print('in_port' + str(in_port))
 
-        dpid = dp.id
-        self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
+        self.logger.info("packet in %s %s %s", src, dst, in_port)
 
-        self.mac_to_port[dpid][src] = in_port
+        self.mac_to_port[src] = in_port
         print(self.mac_to_port)
 
-        if dst in self.mac_to_port[dpid]:
-            out_port = self.mac_to_port[dpid][dst]
+        if dst in self.mac_to_port:
+            out_port = self.mac_to_port[dst]
         else:
             out_port = ofp.OFPP_FLOOD
 

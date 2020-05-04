@@ -40,7 +40,7 @@ class DumbHub(app_manager.RyuApp):
         
         super(DumbHub, self).__init__(*args, **kwargs)
 
-        self.logger.info(type(self).__name__ + " Has initialized")
+        self.logger.info(type(self).__name__ + " has initialized")
     
     # function template at https://ryu.readthedocs.io/en/latest/ofproto_v1_3_ref.html#modify-state-messages
     def send_flow_mod(self, datapath, match, actions):

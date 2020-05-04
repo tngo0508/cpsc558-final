@@ -142,14 +142,14 @@ topology:	clean-mininet-state | $(LOCAL_RENDER_DIR)
 
 # Run our tests and stuff
 run:	deploy
-run:	clean-mininet-state |
+run:	|
 	$(call say,Running our tests and stuff)
 	ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && make clean-logs" \
 		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && make ensure-datafiles" \
-		&& echo "Disabled: " ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name demo" \
-		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name hub" \
-		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name switch" \
-		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name qswitch" \
+		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" &&  ./main.py --run --run-name demo" \
+		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name hub" \
+		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name switch"  \
+		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name qswitch"  \
 		&& $(MAKE) pull-logs
 .PHONY:	run
 

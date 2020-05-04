@@ -54,7 +54,7 @@ class Topology(Topo):
 	__BANDWIDTH_LIMIT_SERVERS_DELAY = "1ms"
 	
 	__BANDWIDTH_LIMIT_CLIENTS_MBPS = 100
-	__BANDWIDTH_LIMIT_CLIENTS_DELAY = "10ms"
+	__BANDWIDTH_LIMIT_CLIENTS_DELAY = "2ms"
 	
 	def __init__(self, logger):
 		

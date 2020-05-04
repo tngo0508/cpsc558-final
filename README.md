@@ -19,7 +19,7 @@ No changes or tests will be performed on your host machine.
 
 Essentially, you'd need to go through the following steps:
 
-1. Setup a fresh Ubuntu 16.04 VM (Sorry !!!)
+1. Setup a fresh Ubuntu 16.04 VM (Sorry !!!). You probably want to assign it multiple cores so our test server/clients don't choke and hide the benefits of using a switch over a hub, too much.
 
 2. Make sure the VM can reach the internet, and is reachable by your host machine (we used bridged mode)
 
@@ -46,13 +46,15 @@ Essentially, you'd need to go through the following steps:
      
      ... your Ubuntu VM is probably still updating.
 
-8. Run the topology test with:
+8. Reboot the VM
+
+9. Run the topology test with:
 
     ```$ make topo```
     
     You should see a message upon success, and a png render of the topology at "repo/render/topology.png"
 
-8. Run all other tests with:
+10. Run all other tests with:
     
     ```$ make run```
     

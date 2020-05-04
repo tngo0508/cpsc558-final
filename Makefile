@@ -52,9 +52,11 @@ UBUNTU_VM_TOPOLOGY_IMAGE := $(UBUNTU_VM_RENDER_DIR)/topology.png
 LOCAL_RENDER_DIR := $(MAKEFILE_DIR)/render
 LOCAL_LOG_DIR := $(MAKEFILE_DIR)/log
 
+
 #
 LOCAL_DATA_DIR := $(MAKEFILE_DIR)/data
 LOCAL_FILE_SERVER_DATAFILE := $(LOCAL_DATA_DIR)/random-data.dat
+LOCAL_FILE_SERVER_DATAFILE_SIZE_MEGABYTES := 10
 
 
 #
@@ -93,7 +95,7 @@ $(LOCAL_DATA_DIR):
 
 $(LOCAL_FILE_SERVER_DATAFILE):	| $(LOCAL_DATA_DIR)
 	$(call say,Ensuring File Server datafile: $@)
-	dd if=/dev/urandom of="$@" bs=1M count=100 status=progress
+	dd if=/dev/urandom of="$@" bs=1M count=$(LOCAL_FILE_SERVER_DATAFILE_SIZE_MEGABYTES) status=progress
 
 
 
@@ -140,14 +142,14 @@ topology:	clean-mininet-state | $(LOCAL_RENDER_DIR)
 
 # Run our tests and stuff
 run:	deploy
-run:	clean-mininet-state |
+run:	|
 	$(call say,Running our tests and stuff)
 	ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && make clean-logs" \
 		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && make ensure-datafiles" \
-		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name demo" \
-		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name hub" \
-		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name switch" \
-		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name qswitch" \
+		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" &&  ./main.py --run --run-name demo" \
+		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name hub" \
+		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name switch"  \
+		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name qswitch"  \
 		&& $(MAKE) pull-logs
 .PHONY:	run
 

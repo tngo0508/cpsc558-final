@@ -9,7 +9,7 @@ class Logger:
 	
 	__DEFAULT_LOGGER_NAME = "UNNAMED LOGGER!"
 	
-	def __init__(self, group=None, log_name=None, label=None):
+	def __init__(self, group=None, log_name=None, label=None, append=False):
 		
 		"""Recycled from other personal repos"""
 		
@@ -47,7 +47,13 @@ class Logger:
 			os.makedirs(log_file_dir)
 		except FileExistsError:
 			pass
-		self.__logger_file_handler = logging.FileHandler(log_file_name, mode='w')
+		
+		if append is True:
+			file_mode = "a"
+		else:
+			file_mode = "w"
+		
+		self.__logger_file_handler = logging.FileHandler(log_file_name, mode=file_mode)
 		self.__logger.addHandler(self.__logger_file_handler)
 		
 		self.set_verbose(False)

@@ -6,6 +6,7 @@ import graphviz
 
 from mininet.net import Mininet
 from mininet.topo import Topo
+from mininet.link import TCLink
 
 import os
 
@@ -43,11 +44,17 @@ class Topology(Topo):
 	__video_client_names = None
 	__video_client_instances = None
 	
-	__mac_address_base = "00:00:00:00:00:0"  # Obviously only like 15 hosts mac with this scheme
+	__mac_address_base = "00:00:00:00:00:"  # Obviously like 255 host macs with this scheme
 	__mac_address_counter = 1
 	
 	__ip_address_base = "10.0.0."
 	__ip_counter = 1
+	
+	__BANDWIDTH_LIMIT_SERVERS_MBPS = 1000
+	__BANDWIDTH_LIMIT_SERVERS_DELAY = "1ms"
+	
+	__BANDWIDTH_LIMIT_CLIENTS_MBPS = 100
+	__BANDWIDTH_LIMIT_CLIENTS_DELAY = "2ms"
 	
 	def __init__(self, logger):
 		
@@ -79,17 +86,28 @@ class Topology(Topo):
 		# Create file server host
 		log.info("Creating file server host")
 		self.add_host_with_addresses(self.__file_server_name)
-		self.addLink(self.__main_switch_name, self.__file_server_name)
+		self.addLink(
+			self.__main_switch_name,
+			self.__file_server_name,
+			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_SERVERS_MBPS, delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
+		)
 		
 		# Create video server host
 		log.info("Creating video server host")
 		self.add_host_with_addresses(self.__video_server_name)
-		self.addLink(self.__main_switch_name, self.__video_server_name)
+		self.addLink(
+			self.__main_switch_name,
+			self.__video_server_name,
+			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_SERVERS_MBPS, delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
+		)
 		
 		# Create our tattle tail host
 		log.info("Creating tattle tail host")
 		self.add_host_with_addresses(self.__tattle_tail_name)
-		self.addLink(self.__main_switch_name, self.__tattle_tail_name)
+		self.addLink(
+			self.__main_switch_name, self.__tattle_tail_name,
+			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+		)
 		
 		# Create file clients
 		log.info("Creating file clients")
@@ -97,7 +115,11 @@ class Topology(Topo):
 			client_name = self.__file_client_name_prefix + str(i + 1)
 			log.info("Creating file client: " + client_name)
 			self.add_host_with_addresses(client_name)
-			self.addLink(self.__main_switch_name, client_name)
+			self.addLink(
+				self.__main_switch_name,
+				client_name,
+				cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+			)
 			self.__file_client_names.append(client_name)
 		
 		# Create video clients
@@ -106,7 +128,11 @@ class Topology(Topo):
 			client_name = self.__video_client_name_prefix + str(i + 1)
 			log.info("Creating video client: " + client_name)
 			self.add_host_with_addresses(client_name)
-			self.addLink(self.__main_switch_name, client_name)
+			self.addLink(
+				self.__main_switch_name,
+				client_name,
+				cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+			)
 			self.__video_client_names.append(client_name)
 		
 		#
@@ -129,10 +155,17 @@ class Topology(Topo):
 	
 	def get_next_mac_address(self):
 		
-		mac = self.__mac_address_base
-		mac += str(self.__mac_address_counter)
+		# Works for up to 255 hosts
 		
+		suffix_int = self.__mac_address_counter
 		self.__mac_address_counter += 1
+		
+		suffix = hex(suffix_int)[2:]
+		if len(suffix) == 1:
+			suffix = "0" + suffix
+		
+		mac = self.__mac_address_base
+		mac += suffix
 		
 		return mac
 	

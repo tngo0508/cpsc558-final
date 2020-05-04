@@ -22,16 +22,24 @@ class CPSC558FinalProject:
 	__DEFAULT_RUN_NAME = "main"
 	__DEFAULT_FILE_SERVER_DIRECTORY = "data"
 	
-	__BANDWIDTH_LIMIT_MBPS = 100
+	__BANDWIDTH_LIMIT_MBPS = 1000
+	__BANDWIDTH_LIMIT_LATENCY = "1ms"
 	
 	def __init__(self, run_name):
 		
 		self.__run_name = run_name
 		
 		self.__logger = Logger(
-			group=run_name,
+			group=self.__run_name,
 			log_name=__name__,
 			label="558 Project"
+		)
+		
+		self.__logger_summary = Logger(
+			group="summary",
+			log_name=__name__,
+			label="558 Project Summary",
+			append=True
 		)
 		
 		self.__net = None  # Mininet
@@ -44,20 +52,33 @@ class CPSC558FinalProject:
 		
 		log = self.__logger.get()
 		
-		# Instantiate some controllers we can choose to run with
-		controllers = dict({
-			
-			"demo": ("Demo Switch", Ryu('ryu_demo_switch', 'controllers/Demo_SimpleSwitch.py')),
-			"hub": ("Dumb Hub", Ryu('ryu_dumb_hub', 'controllers/DumbHub.py')),
-			"switch": ("Simple Switch", Ryu('ryu_simple_switch', 'controllers/SimpleSwitch.py')),
-			"qswitch": ("QoS Switch", Ryu('ryu_qswitch', 'controllers/QSwitch.py'))
-		})
-		if self.__run_name not in controllers.keys():
-			raise Exception("Invalid run name: " + str(self.__run_name))
+		controller_log_file = os.path.join(
+			self.__logger.make_log_file_directory_path(),
+			"controller.txt"
+		)
 		
-		#
-		controller_name, controller = controllers[self.__run_name]
-		self.__logger.heading("Running with controller: " + controller_name)
+		controller_name = "ryu_" + self.__run_name
+		controller_path_relative = "controllers/"
+		if self.__run_name == "demo":
+			controller_source_file_name = "Demo_SimpleSwitch.py"
+		elif self.__run_name == "hub":
+			controller_source_file_name = "DumbHub.py"
+		elif self.__run_name == "switch":
+			controller_source_file_name = "SimpleSwitch.py"
+		elif self.__run_name == "qswitch":
+			controller_source_file_name = "QSwitch.py"
+		else:
+			raise Exception("Invalid run name: " + str(self.__run_name))
+		controller_path_relative += controller_source_file_name
+		
+		# Instantiate Mininet::Ryu(), which just launches ryu-manager for us
+		controller = Ryu(
+			controller_name, controller_path_relative,
+			# "--verbose",
+			"--log-file", controller_log_file
+		)
+		
+		self.__logger.heading("Running with controller: " + controller_source_file_name)
 		
 		log.info("Instantiating custom Topology class")
 		self.__topo = Topology(self.__logger)
@@ -75,16 +96,9 @@ class CPSC558FinalProject:
 		
 		log.info("Instantiating Mininet")
 		
-		#####
-		# Pulled a snippet from Mininet/examples to limit bandwidth
-		bw_limited_interface = mininet_custom(TCIntf, bw=self.__BANDWIDTH_LIMIT_MBPS)
-		log.info("Using bandwidth limit of: " + str(self.__BANDWIDTH_LIMIT_MBPS) + " mbps")
-		#####
-		
 		self.__net = Mininet(
 			topo=self.__topo,
 			controller=controller,
-			intf=bw_limited_interface,
 			waitConnected=False
 		)
 		self.__topo.set_net(self.__net)
@@ -202,9 +216,9 @@ class CPSC558FinalProject:
 		log.info("Starting video traffic")
 		
 		server_log_file = self.make_process_stdout_file_path(self.__run_name, "video-server-stdout")
-		log.info(server_log_file)
+		log.info("Video server stdout: " + server_log_file)
 		client_log_file = self.make_process_stdout_file_path(self.__run_name, "video-clients-stdout")
-		log.info(client_log_file)
+		log.info("Video clients stdout: " + client_log_file)
 		
 		# Get video server instance
 		server = self.__topo.get_video_server_instance()
@@ -263,9 +277,9 @@ class CPSC558FinalProject:
 		log.info("Starting file traffic")
 		
 		server_log_file = self.make_process_stdout_file_path(self.__run_name, "file-server-stdout")
-		log.info(server_log_file)
+		log.info("File server stdout: " + server_log_file)
 		client_log_file = self.make_process_stdout_file_path(self.__run_name, "file-clients-stdout")
-		log.info(client_log_file)
+		log.info("File clients stdout: " + client_log_file)
 		
 		# Get file server instance
 		server = self.__topo.get_file_server_instance()
@@ -356,7 +370,13 @@ class CPSC558FinalProject:
 	def summarize_node_benchmark_logs(self):
 		
 		log = self.__logger.get()
+		log_s = self.__logger_summary.get()
+		
 		log.info("Attempting to summarize node benchmark logs")
+		
+		log_s.info("")
+		log_s.info("*** " + self.__run_name + " ***")
+		log_s.info("Attempting to summarize node benchmark logs")
 		
 		logs_dir = self.__logger.make_log_file_directory_path()
 		log.info("Pulling from log directory: " + logs_dir)
@@ -422,6 +442,10 @@ class CPSC558FinalProject:
 		mbps_average_all = sum(mbps_all_samples) / len(mbps_all_samples)
 		
 		log.info("We seem to have the following aggregate bandwidths:")
+		log_s.info("We seem to have the following aggregate bandwidths:")
 		log.info("File clients: " + str(mbps_average_file) + " mbps")
+		log_s.info("File clients: " + str(mbps_average_file) + " mbps")
 		log.info("Video clients: " + str(mbps_average_video) + " mbps")
+		log_s.info("Video clients: " + str(mbps_average_video) + " mbps")
 		log.info("All clients: " + str(mbps_average_all) + " mbps")
+		log_s.info("All clients: " + str(mbps_average_all) + " mbps")

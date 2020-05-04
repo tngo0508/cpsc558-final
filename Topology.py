@@ -35,12 +35,12 @@ class Topology(Topo):
 	__tattle_tail_instance = None
 	
 	__file_client_name_prefix = "FC"
-	__file_client_hosts_count = 3
+	__file_client_hosts_count = 2
 	__file_client_names = None
 	__file_client_instances = None
 	
 	__video_client_name_prefix = "VC"
-	__video_client_hosts_count = 3
+	__video_client_hosts_count = 2
 	__video_client_names = None
 	__video_client_instances = None
 	

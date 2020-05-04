@@ -30,7 +30,7 @@ class CPSC558FinalProject:
 		self.__run_name = run_name
 		
 		self.__logger = Logger(
-			group=run_name,
+			group=self.__run_name,
 			log_name=__name__,
 			label="558 Project"
 		)
@@ -45,20 +45,33 @@ class CPSC558FinalProject:
 		
 		log = self.__logger.get()
 		
-		# Instantiate some controllers we can choose to run with
-		controllers = dict({
-			
-			"demo": ("Demo Switch", Ryu('ryu_demo_switch', 'controllers/Demo_SimpleSwitch.py')),
-			"hub": ("Dumb Hub", Ryu('ryu_dumb_hub', 'controllers/DumbHub.py')),
-			"switch": ("Simple Switch", Ryu('ryu_simple_switch', 'controllers/SimpleSwitch.py')),
-			"qswitch": ("QoS Switch", Ryu('ryu_qswitch', 'controllers/QSwitch.py'))
-		})
-		if self.__run_name not in controllers.keys():
-			raise Exception("Invalid run name: " + str(self.__run_name))
+		controller_log_file = os.path.join(
+			self.__logger.make_log_file_directory_path(),
+			"controller.txt"
+		)
 		
-		#
-		controller_name, controller = controllers[self.__run_name]
-		self.__logger.heading("Running with controller: " + controller_name)
+		controller_name = "ryu_" + self.__run_name
+		controller_path_relative = "controllers/"
+		if self.__run_name == "demo":
+			controller_source_file_name = "Demo_SimpleSwitch.py"
+		elif self.__run_name == "hub":
+			controller_source_file_name = "DumbHub.py"
+		elif self.__run_name == "switch":
+			controller_source_file_name = "SimpleSwitch.py"
+		elif self.__run_name == "qswitch":
+			controller_source_file_name = "QSwitch.py"
+		else:
+			raise Exception("Invalid run name: " + str(self.__run_name))
+		controller_path_relative += controller_source_file_name
+		
+		# Instantiate Mininet::Ryu(), which just launches ryu-manager for us
+		controller = Ryu(
+			controller_name, controller_path_relative,
+			# "--verbose",
+			"--log-file", controller_log_file
+		)
+		
+		self.__logger.heading("Running with controller: " + controller_source_file_name)
 		
 		log.info("Instantiating custom Topology class")
 		self.__topo = Topology(self.__logger)
@@ -76,20 +89,9 @@ class CPSC558FinalProject:
 		
 		log.info("Instantiating Mininet")
 		
-		#####
-		# Inspired by a snippet from Mininet/examples to limit bandwidth
-		bw_limited_interface = mininet_custom(
-			TCIntf,
-			bw=self.__BANDWIDTH_LIMIT_MBPS,
-			delay=self.__BANDWIDTH_LIMIT_LATENCY
-		)
-		log.info("Using bandwidth limit of: " + str(self.__BANDWIDTH_LIMIT_MBPS) + " mbps")
-		#####
-		
 		self.__net = Mininet(
 			topo=self.__topo,
 			controller=controller,
-			# intf=bw_limited_interface,
 			waitConnected=False
 		)
 		self.__topo.set_net(self.__net)

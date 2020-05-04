@@ -13,6 +13,7 @@ from mininet.util import custom as mininet_custom
 from mininet.node import Ryu
 
 import os
+import re
 import sys
 
 
@@ -30,7 +31,7 @@ class CPSC558FinalProject:
 		self.__logger = Logger(
 			group=run_name,
 			log_name=__name__,
-			label="558 Final Project"
+			label="558 Project"
 		)
 		
 		self.__net = None  # Mininet
@@ -108,6 +109,7 @@ class CPSC558FinalProject:
 		
 		#
 		self.wait_for_hosts_to_finish()
+		self.summarize_node_logs()
 	
 	def do_topology_test(self):
 		
@@ -227,7 +229,7 @@ class CPSC558FinalProject:
 				+ " 2>&1"
 			)
 		
-		# Instantiate clients
+		# Grab client instances
 		clients = list(self.__topo.get_video_client_instances().values())
 		
 		# Start each client
@@ -290,7 +292,7 @@ class CPSC558FinalProject:
 				+ " 2>&1"
 			)
 		
-		# Instantiate clients
+		# Grab client instances
 		clients = list(self.__topo.get_file_client_instances().values())
 		
 		# Start each client
@@ -346,3 +348,80 @@ class CPSC558FinalProject:
 		)
 		
 		return d
+	
+	def summarize_node_logs(self):
+		
+		self.summarize_node_benchmark_logs()
+	
+	def summarize_node_benchmark_logs(self):
+		
+		log = self.__logger.get()
+		log.info("Attempting to summarize node benchmark logs")
+		
+		logs_dir = self.__logger.make_log_file_directory_path()
+		log.info("Pulling from log directory: " + logs_dir)
+		
+		# Build a list of all nodes we're interested in
+		nodes_file_clients = list(self.__topo.get_file_client_instances().values())
+		nodes_video_clients = list(self.__topo.get_video_client_instances().values())
+		nodes_all_clients = nodes_file_clients + nodes_video_clients
+		log.info("Will examine logs from " + str(len(nodes_all_clients)) + " client nodes")
+		
+		pattern_bytes_received = re.compile("""^Bytes received: (?P<bytes>[0-9]+)$""", re.MULTILINE | re.IGNORECASE)
+		pattern_mbps = re.compile("""^Megabits per second: (?P<mbps>[0-9.]+)$""", re.MULTILINE | re.IGNORECASE)
+		
+		# For each client we're interested in, pull the number of bytes transferred from its logs
+		total_bytes = 0
+		mbps_all_samples = list()
+		mbps_file_samples = list()
+		mbps_video_samples = list()
+		for node in nodes_all_clients:
+			
+			node_log_file_name = str(node) + ".txt"
+			
+			log_path = os.path.join(logs_dir, node_log_file_name)
+			
+			log.info("Examining log for node \"" + str(node) + "\": " + node_log_file_name)
+			
+			# Load the logfile
+			with open(log_path, "rt") as f:
+				
+				s = f.read()
+				
+				# Bytes received
+				match = pattern_bytes_received.search(s)
+				if match is None:
+					raise Exception("Failed to parse node; Cannot find bytes received!")
+				node_bytes = int(match.group("bytes"))
+				total_bytes += node_bytes
+				log.info(
+					"Node \"" + str(node) + "\" seems to have received " + str(node_bytes) + " bytes"
+					+ " (" + str(total_bytes) + " total)"
+				)
+				
+				# Megabits per second
+				match = pattern_mbps.search(s)
+				if match is None:
+					raise Exception("Failed to parse node; Cannot find megabits per second!")
+				node_mbps = float(match.group("mbps"))
+				log.info(
+					"Node \"" + str(node) + "\" seems to have received data at " + str(node_mbps) + " megabits per second"
+				)
+				
+				# Add to sample pools
+				mbps_all_samples.append(node_mbps)
+				if node in nodes_file_clients:
+					mbps_file_samples.append(node_mbps)
+				elif node in nodes_video_clients:
+					mbps_video_samples.append(node_mbps)
+				else:
+					raise Exception("Don't know where to add this node's bandwidth sample!")
+		
+		mbps_average_file = sum(mbps_file_samples) / len(mbps_file_samples)
+		mbps_average_video = sum(mbps_video_samples) / len(mbps_video_samples)
+		mbps_average_all = sum(mbps_all_samples) / len(mbps_all_samples)
+		
+		log.info("We seem to have the following aggregate bandwidths:")
+		log.info("File clients: " + str(mbps_average_file) + " mbps")
+		log.info("Video clients: " + str(mbps_average_video) + " mbps")
+		log.info("All clients: " + str(mbps_average_all) + " mbps")

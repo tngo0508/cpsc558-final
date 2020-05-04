@@ -15,9 +15,6 @@ Please keep the above admission fully in mind if you see any similarities :)
 """
 
 
-# from ..Logger import Logger
-
-
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import HANDSHAKE_DISPATCHER, MAIN_DISPATCHER, CONFIG_DISPATCHER
@@ -41,21 +38,14 @@ class DumbHub(app_manager.RyuApp):
     
     def __init__(self, *args, **kwargs):
         
-        # print("Dumb hub args!", args, kwargs)
-        # with open("/root/hey.txt", "wt") as f:
-        #     f.write(str(kwargs))
-        
         super(DumbHub, self).__init__(*args, **kwargs)
-        
-        # self.logger.info('***DumbHub***')
-        #self.__logger = None
-        #self.__logger = Logger("hub", "DumbHub")
+
+        self.logger.info(type(self).__name__ + " Has initialized")
     
     # function template at https://ryu.readthedocs.io/en/latest/ofproto_v1_3_ref.html#modify-state-messages
     def send_flow_mod(self, datapath, match, actions):
         
-        #log = self.__logger.get()
-        #log.info("send_flow_mod !")
+        self.logger.info("Begin send_flow_mod")
         
         ofp = datapath.ofproto
         ofp_parser = datapath.ofproto_parser
@@ -81,13 +71,13 @@ class DumbHub(app_manager.RyuApp):
             match, inst
         )
         datapath.send_msg(req)
+
+        self.logger.info("End send_flow_mod")
     
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def dumb_hub_features_handler(self, ev):
         
-        # self.logger.info('****dumb_hub_handler****')
-        #log = self.__logger.get()
-        #log.info("dumb_hub_features_handler !")
+        self.logger.info("Begin dumb_hub_features_handler")
         
         dp = ev.msg.datapath
         ofproto = dp.ofproto
@@ -105,14 +95,14 @@ class DumbHub(app_manager.RyuApp):
         # print(match)
         # print(actions)
         self.send_flow_mod(dp, match, actions)
+        
+        self.logger.info("End dumb_hub_features_handler")
 
     # sends received packets to all ports
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):
         
-        # self.logger.info("***packet_in_handler***")
-        #log = self.__logger.get()
-        #log.info("packet_in_handler !")
+        # self.logger.info("Begin packet_in_handler")
         
         msg = ev.msg  # instance of OpenFlow messages
         # represent a datapath(switch) which corresponding to OpenFlow that issued the message
@@ -126,14 +116,16 @@ class DumbHub(app_manager.RyuApp):
 
         dst = eth.dst
         src = eth.src
-
+        # self.logger.info("Looks like our source is: " + str(src))
+        # self.logger.info("Looks like our destination is: " + str(dst))
+        
         # in_port = msg.match('in_port')
         # print(msg)
         in_port = msg.match['in_port']
         # print('in_port' + str(in_port))
         
         dpid = dp.id
-        # self.logger.info("packet in %s %s %s", dpid, src, dst)
+        # self.logger.info("Datapath ID is: %s", dpid)
         
         # construct packet_out message and send it.
         actions = [ofp_parser.OFPActionOutput(ofp.OFPP_FLOOD)]
@@ -144,3 +136,5 @@ class DumbHub(app_manager.RyuApp):
             data=msg.data
         )
         dp.send_msg(out)
+
+        # self.logger.info("End packet_in_handler")

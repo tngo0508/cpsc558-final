@@ -22,7 +22,8 @@ class CPSC558FinalProject:
 	__DEFAULT_RUN_NAME = "main"
 	__DEFAULT_FILE_SERVER_DIRECTORY = "data"
 	
-	__BANDWIDTH_LIMIT_MBPS = 100
+	__BANDWIDTH_LIMIT_MBPS = 1000
+	__BANDWIDTH_LIMIT_LATENCY = "1ms"
 	
 	def __init__(self, run_name):
 		
@@ -76,15 +77,19 @@ class CPSC558FinalProject:
 		log.info("Instantiating Mininet")
 		
 		#####
-		# Pulled a snippet from Mininet/examples to limit bandwidth
-		bw_limited_interface = mininet_custom(TCIntf, bw=self.__BANDWIDTH_LIMIT_MBPS)
+		# Inspired by a snippet from Mininet/examples to limit bandwidth
+		bw_limited_interface = mininet_custom(
+			TCIntf,
+			bw=self.__BANDWIDTH_LIMIT_MBPS,
+			delay=self.__BANDWIDTH_LIMIT_LATENCY
+		)
 		log.info("Using bandwidth limit of: " + str(self.__BANDWIDTH_LIMIT_MBPS) + " mbps")
 		#####
 		
 		self.__net = Mininet(
 			topo=self.__topo,
 			controller=controller,
-			intf=bw_limited_interface,
+			# intf=bw_limited_interface,
 			waitConnected=False
 		)
 		self.__topo.set_net(self.__net)

@@ -6,6 +6,7 @@ import graphviz
 
 from mininet.net import Mininet
 from mininet.topo import Topo
+from mininet.link import TCLink
 
 import os
 
@@ -34,12 +35,12 @@ class Topology(Topo):
 	__tattle_tail_instance = None
 	
 	__file_client_name_prefix = "FC"
-	__file_client_hosts_count = 2
+	__file_client_hosts_count = 3
 	__file_client_names = None
 	__file_client_instances = None
 	
 	__video_client_name_prefix = "VC"
-	__video_client_hosts_count = 2
+	__video_client_hosts_count = 3
 	__video_client_names = None
 	__video_client_instances = None
 	
@@ -48,6 +49,12 @@ class Topology(Topo):
 	
 	__ip_address_base = "10.0.0."
 	__ip_counter = 1
+	
+	__BANDWIDTH_LIMIT_SERVERS_MBPS = 1000
+	__BANDWIDTH_LIMIT_SERVERS_DELAY = "1ms"
+	
+	__BANDWIDTH_LIMIT_CLIENTS_MBPS = 100
+	__BANDWIDTH_LIMIT_CLIENTS_DELAY = "10ms"
 	
 	def __init__(self, logger):
 		
@@ -79,17 +86,28 @@ class Topology(Topo):
 		# Create file server host
 		log.info("Creating file server host")
 		self.add_host_with_addresses(self.__file_server_name)
-		self.addLink(self.__main_switch_name, self.__file_server_name)
+		self.addLink(
+			self.__main_switch_name,
+			self.__file_server_name,
+			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_SERVERS_MBPS, delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
+		)
 		
 		# Create video server host
 		log.info("Creating video server host")
 		self.add_host_with_addresses(self.__video_server_name)
-		self.addLink(self.__main_switch_name, self.__video_server_name)
+		self.addLink(
+			self.__main_switch_name,
+			self.__video_server_name,
+			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_SERVERS_MBPS, delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
+		)
 		
 		# Create our tattle tail host
 		log.info("Creating tattle tail host")
 		self.add_host_with_addresses(self.__tattle_tail_name)
-		self.addLink(self.__main_switch_name, self.__tattle_tail_name)
+		self.addLink(
+			self.__main_switch_name, self.__tattle_tail_name,
+			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+		)
 		
 		# Create file clients
 		log.info("Creating file clients")
@@ -97,7 +115,11 @@ class Topology(Topo):
 			client_name = self.__file_client_name_prefix + str(i + 1)
 			log.info("Creating file client: " + client_name)
 			self.add_host_with_addresses(client_name)
-			self.addLink(self.__main_switch_name, client_name)
+			self.addLink(
+				self.__main_switch_name,
+				client_name,
+				cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+			)
 			self.__file_client_names.append(client_name)
 		
 		# Create video clients
@@ -106,7 +128,11 @@ class Topology(Topo):
 			client_name = self.__video_client_name_prefix + str(i + 1)
 			log.info("Creating video client: " + client_name)
 			self.add_host_with_addresses(client_name)
-			self.addLink(self.__main_switch_name, client_name)
+			self.addLink(
+				self.__main_switch_name,
+				client_name,
+				cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+			)
 			self.__video_client_names.append(client_name)
 		
 		#

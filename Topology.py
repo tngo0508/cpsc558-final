@@ -43,7 +43,7 @@ class Topology(Topo):
 	__video_client_names = None
 	__video_client_instances = None
 	
-	__mac_address_base = "00:00:00:00:00:0"  # Obviously only like 15 hosts mac with this scheme
+	__mac_address_base = "00:00:00:00:00:"  # Obviously like 255 host macs with this scheme
 	__mac_address_counter = 1
 	
 	__ip_address_base = "10.0.0."
@@ -129,10 +129,17 @@ class Topology(Topo):
 	
 	def get_next_mac_address(self):
 		
-		mac = self.__mac_address_base
-		mac += str(self.__mac_address_counter)
+		# Works for up to 255 hosts
 		
+		suffix_int = self.__mac_address_counter
 		self.__mac_address_counter += 1
+		
+		suffix = hex(suffix_int)[2:]
+		if len(suffix) == 1:
+			suffix = "0" + suffix
+		
+		mac = self.__mac_address_base
+		mac += suffix
 		
 		return mac
 	

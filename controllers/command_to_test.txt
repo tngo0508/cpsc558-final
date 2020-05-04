@@ -1,0 +1,3 @@
+sudo mn --controller=remote,ip=192.168.1.187 --custom mininet_topo_test.py --topo mytopo --switch ovs --mac
+
+ryu-manager DumbHub.py --log-file ryu.log --verbose

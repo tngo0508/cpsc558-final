@@ -39,7 +39,6 @@ class DumbHub(app_manager.RyuApp):
         
         super(DumbHub, self).__init__(*args, **kwargs)
         
-        self.mac_to_port = {}
         self.logger.info('***DumbHub***')
 
     # function template at https://ryu.readthedocs.io/en/latest/ofproto_v1_3_ref.html#modify-state-messages
@@ -115,12 +114,9 @@ class DumbHub(app_manager.RyuApp):
         # print(msg)
         in_port = msg.match['in_port']
         # print('in_port' + str(in_port))
-
+        
         dpid = dp.id
-        self.mac_to_port.setdefault(dpid, {})
         self.logger.info("packet in %s %s %s", dpid, src, dst)
-
-        self.mac_to_port[dpid][src] = in_port
 
         # construct packet_out message and send it.
         actions = [ofp_parser.OFPActionOutput(ofp.OFPP_FLOOD)]

@@ -6,6 +6,7 @@ Our final project repo. Woot.
 
 * Mike Peralta mikeperalta@csu.fullerton.edu
 * Thomas Ngo tngo0508@csu.fullerton.edu
+* Andy Nguyen andy21996@csu.fullerton.edu
 
 ## Professor Instructions
 

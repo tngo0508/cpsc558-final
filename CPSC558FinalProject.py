@@ -31,7 +31,7 @@ class CPSC558FinalProject:
 		self.__logger = Logger(
 			group=run_name,
 			log_name=__name__,
-			label="558 Final Project"
+			label="558 Project"
 		)
 		
 		self.__net = None  # Mininet
@@ -362,19 +362,20 @@ class CPSC558FinalProject:
 		log.info("Pulling from log directory: " + logs_dir)
 		
 		# Build a list of all nodes we're interested in
-		nodes = list()
-		nodes += list(self.__topo.get_file_client_instances().values())
-		nodes += list(self.__topo.get_video_client_instances().values())
-		log.info("Will examine logs from " + str(len(nodes)) + " nodes")
+		nodes_file_clients = list(self.__topo.get_file_client_instances().values())
+		nodes_video_clients = list(self.__topo.get_video_client_instances().values())
+		nodes_all_clients = nodes_file_clients + nodes_video_clients
+		log.info("Will examine logs from " + str(len(nodes_all_clients)) + " client nodes")
 		
 		pattern_bytes_received = re.compile("""^Bytes received: (?P<bytes>[0-9]+)$""", re.MULTILINE | re.IGNORECASE)
 		pattern_mbps = re.compile("""^Megabits per second: (?P<mbps>[0-9.]+)$""", re.MULTILINE | re.IGNORECASE)
 		
 		# For each client we're interested in, pull the number of bytes transferred from its logs
 		total_bytes = 0
-		mbps_samples = list()
-		# node_summaries = dict()
-		for node in nodes:
+		mbps_all_samples = list()
+		mbps_file_samples = list()
+		mbps_video_samples = list()
+		for node in nodes_all_clients:
 			
 			node_log_file_name = str(node) + ".txt"
 			
@@ -403,11 +404,24 @@ class CPSC558FinalProject:
 				if match is None:
 					raise Exception("Failed to parse node; Cannot find megabits per second!")
 				node_mbps = float(match.group("mbps"))
-				mbps_samples.append(node_mbps)
-				mbps_average = sum(mbps_samples) / len(mbps_samples)
 				log.info(
 					"Node \"" + str(node) + "\" seems to have received data at " + str(node_mbps) + " megabits per second"
-					+ " (Average: " + str(mbps_average) + ")"
 				)
 				
-		log.info("We seem to have an aggregate performance of: " + str(mbps_average) + " megabits per second")
+				# Add to sample pools
+				mbps_all_samples.append(node_mbps)
+				if node in nodes_file_clients:
+					mbps_file_samples.append(node_mbps)
+				elif node in nodes_video_clients:
+					mbps_video_samples.append(node_mbps)
+				else:
+					raise Exception("Don't know where to add this node's bandwidth sample!")
+		
+		mbps_average_file = sum(mbps_file_samples) / len(mbps_file_samples)
+		mbps_average_video = sum(mbps_video_samples) / len(mbps_video_samples)
+		mbps_average_all = sum(mbps_all_samples) / len(mbps_all_samples)
+		
+		log.info("We seem to have the following aggregate bandwidths:")
+		log.info("File clients: " + str(mbps_average_file) + " mbps")
+		log.info("Video clients: " + str(mbps_average_video) + " mbps")
+		log.info("All clients: " + str(mbps_average_all) + " mbps")

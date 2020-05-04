@@ -22,6 +22,8 @@ class Logger:
 		if label is None:
 			raise Exception("Need the label")
 		
+		self.__group = group
+		
 		self.__logger = logging.getLogger(label)
 		self.__logger.setLevel(logging.DEBUG)
 		
@@ -36,11 +38,7 @@ class Logger:
 		self.__logger.addHandler(self.__logger_console_handler)
 		
 		# Output to file
-		log_file_dir = os.path.join(
-			os.path.dirname(__file__),
-			"log",
-			group
-		)
+		log_file_dir = self.make_log_file_directory_path()
 		log_file_name = os.path.join(
 			log_file_dir,
 			log_name + ".txt"
@@ -53,6 +51,16 @@ class Logger:
 		self.__logger.addHandler(self.__logger_file_handler)
 		
 		self.set_verbose(False)
+	
+	def make_log_file_directory_path(self):
+		
+		d = os.path.join(
+			os.path.dirname(__file__),
+			"log",
+			self.__group
+		)
+		
+		return d
 	
 	def set_verbose(self, verbose):
 		

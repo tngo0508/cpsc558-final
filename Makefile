@@ -55,6 +55,7 @@ LOCAL_LOG_DIR := $(MAKEFILE_DIR)/log
 #
 LOCAL_DATA_DIR := $(MAKEFILE_DIR)/data
 LOCAL_FILE_SERVER_DATAFILE := $(LOCAL_DATA_DIR)/random-data.dat
+LOCAL_FILE_SERVER_DATAFILE_SIZE_MEGABYTES := 10
 
 
 #
@@ -93,7 +94,7 @@ $(LOCAL_DATA_DIR):
 
 $(LOCAL_FILE_SERVER_DATAFILE):	| $(LOCAL_DATA_DIR)
 	$(call say,Ensuring File Server datafile: $@)
-	dd if=/dev/urandom of="$@" bs=1M count=100 status=progress
+	dd if=/dev/urandom of="$@" bs=1M count=$(LOCAL_FILE_SERVER_DATAFILE_SIZE_MEGABYTES) status=progress
 
 
 

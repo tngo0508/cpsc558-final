@@ -18,10 +18,14 @@ An OpenFlow 1.0 L2 learning switch implementation.
 """
 
 """
-This file should NOT BE PART of the final submission. It should only be used as a reference.
-It is a working example of a Switch we can write for our project.
-It proves the setup we currently have up to this point does indeed work
-... assuming it has a working switch. lel.
+
+NOTE TO PROFESSOR:
+
+We completely didn't write this.
+    We're only using it as a reference to try and guide our learning.
+    Please don't consider this part of our submission.
+
+We're mainly keeping it around to prove our custom framework function correctly.
 """
 
 
@@ -37,6 +41,7 @@ from ryu.lib.packet import ether_types
 
 
 class SimpleSwitch(app_manager.RyuApp):
+    
     OFP_VERSIONS = [ofproto_v1_0.OFP_VERSION]
 
     def __init__(self, *args, **kwargs):

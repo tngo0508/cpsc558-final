@@ -68,12 +68,15 @@ menu:
 	@echo "**************************************************"
 	@echo "********** CPSC 558 Final Project Menu"
 	@echo
-	@echo "make menu              ===> This menu"
+	@echo "make menu                  ===> This menu"
 	@echo
-	@echo "make setup-ubuntu-vm   ===> Setup a fresh Ubuntu 16.04 install (Update, install Mininet, etc)"
+	@echo "make setup-ubuntu-vm       ===> Setup a fresh Ubuntu 16.04 install (Update, install Mininet, etc)"
 	@echo
-	@echo "make topo              ===> Run a test build of the topology"
-	@echo "make run               ===> Run all our tests and stuff"
+	@echo "make topo                  ===> Run a test build of the topology"
+	@echo "make run                   ===> Run all our tests and stuff"
+	@echo
+	@echo "** Run single tests **"
+	@echo "make run-single-qswitch    ===> Run the qswitch test"
 	@echo
 
 
@@ -140,18 +143,38 @@ topology:	clean-mininet-state | $(LOCAL_RENDER_DIR)
 .PHONY:	topo topology
 
 
-# Run our tests and stuff
-run:	deploy
-run:	|
-	$(call say,Running our tests and stuff)
+# Prepare for a run
+run-prepare:	deploy
 	ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && make clean-logs" \
-		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && make ensure-datafiles" \
+		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && make ensure-datafiles"
+.PHONY: run-prepare
+
+
+# Run our tests and stuff
+run:	run-prepare
+	$(call say,Running our tests and stuff)
 		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" &&  ./main.py --run --run-name demo" \
 		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name hub" \
 		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name switch"  \
-		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name qswitch"  \
+		&& $(MAKE) run-qswitch  \
 		&& $(MAKE) pull-logs
 .PHONY:	run
+
+
+
+# Single test for our QSwitch
+run-single-qswitch:	run-prepare
+	$(call say,Running QSwitch tests)
+	$(MAKE) run-qswitch \
+		&& $(MAKE) pull-logs
+.PHONY: run-single-qswitch
+
+
+# Run our QSwitch tests
+run-qswitch:	|
+	$(call say,Running QSwitch tests)
+	$(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name qswitch"
+.PHONY:	run-qswitch
 
 
 # Pull logs from the remote server

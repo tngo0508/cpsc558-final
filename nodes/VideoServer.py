@@ -8,6 +8,7 @@ import socket
 class VideoServer(ServerBase):
 	
 	__listen_port = 8013
+	__socket_timeout_seconds = 1
 	
 	def __init__(self, run_name, name):
 		
@@ -29,7 +30,7 @@ class VideoServer(ServerBase):
 		sock = self.socket()
 		
 		# Set a timeout on our socket because we were getting stucked
-		sock.settimeout(0.01)
+		sock.settimeout(self.__socket_timeout_seconds)
 		
 		reply_data = "Z" * 1024
 		reply_data = reply_data.encode()

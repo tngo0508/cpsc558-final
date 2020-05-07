@@ -14,8 +14,8 @@ class FileClient:
 	__default_server_port = 8012
 	
 	#
-	__default_request_timeout = 1
-	__default_request_retries = 1000
+	__default_request_timeout = 2
+	__default_request_retries = 30
 	
 	def __init__(self, run_name=None, name=None, server_host=None, server_port=None):
 		
@@ -64,14 +64,15 @@ class FileClient:
 				success = True
 				break
 			except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout, TypeError):
-				log.error("Failed to download url: " + url)
+				log.error("Error trying to download url: " + url)
 				any_fails = True
 		
-		if not success:
+		if success is True:
+			response_data = r.content
+		else:
 			log.info("Failed to download url: " + url)
-			return
+			response_data = ""
 		
-		response_data = r.content
 		self.__benchmarker.set_bytes_received(len(response_data))
 		self.__benchmarker.stop()
 		

@@ -106,7 +106,8 @@ $(LOCAL_FILE_SERVER_DATAFILE):	| $(LOCAL_DATA_DIR)
 deploy:
 	$(call say,Deploying repo to Mininet VM)
 	ssh $(UBUNTU_VM_USER)@"$(UBUNTU_VM_HOST)" "mkdir --parents \"$(UBUNTU_VM_REPO_DIR)\"" \
-		&& rsync --archive --delete --recursive --verbose --stats --itemize-changes --human-readable --progress \
+		&& rsync --archive --delete --delete-excluded --recursive --verbose --stats --itemize-changes --human-readable --progress \
+			--exclude '*__pycache__*' \
 			"$(MAKEFILE_DIR)"/ $(UBUNTU_VM_USER)@"$(UBUNTU_VM_HOST)":"$(UBUNTU_VM_REPO_DIR)"/
 
 

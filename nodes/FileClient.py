@@ -14,8 +14,8 @@ class FileClient:
 	__default_server_port = 8012
 	
 	#
-	__default_request_timeout = 5
-	__default_request_retries = 100
+	__default_request_timeout = 1
+	__default_request_retries = 1000
 	
 	def __init__(self, run_name=None, name=None, server_host=None, server_port=None):
 		

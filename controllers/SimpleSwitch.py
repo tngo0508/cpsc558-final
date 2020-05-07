@@ -151,7 +151,7 @@ class SimpleSWitch(app_manager.RyuApp):
         eth = pkt.get_protocol(ethernet.ethernet)
         # print(pkt)
 
-        src_mac= eth.src
+        src_mac = eth.src
         dst_mac = eth.dst
         # self.logger.info("Packet is flowing from %s to %s", src, dst)
         

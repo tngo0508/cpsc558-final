@@ -210,11 +210,20 @@ class QSwitch(app_manager.RyuApp):
                 # self.logger.info(pkt.get_protocol(tcp.tcp))
                 # if pkt.get_protocol(tcp.tcp):
                 #     self.logger.info('TCP!')
-
-                self.logger.info('buffer_id: %s', msg.buffer_id)
-                self.logger.info('OFP_NO_BUFFER %s', ofp.OFP_NO_BUFFER)
+                
+                if msg.buffer_id == ofp.OFP_NO_BUFFER:
+                    self.logger.info("This message doesn't reference a buffer")
+                else:
+                    self.logger.info('Buffer ID: %s', msg.buffer_id)
+                
                 if match is not None:
+                    
+                    self.logger.info("Match was not none; Proceeding to possibly add flow")
+                    
                     if msg.buffer_id != ofp.OFP_NO_BUFFER:
+                        
+                        self.logger.info("Message buffer ID was not \"no buffer\"; Proceeding to add a flow")
+                        
                         # set priority for tcp and udp
                         if t:
                             self.send_flow_mod(dp, match, actions, 2, msg.buffer_id)
@@ -223,8 +232,8 @@ class QSwitch(app_manager.RyuApp):
                             self.send_flow_mod(dp, match, actions, 3, msg.buffer_id)
                             return
                     else:
+                        self.logger.info("Message buffer ID was \"no buffer\"; Will not add a flow now")
                         # self.send_flow_mod(dp, match, actions, 1)
-                        pass
 
             # for p in pkt:
             #     # print(p.protocol_name, p)

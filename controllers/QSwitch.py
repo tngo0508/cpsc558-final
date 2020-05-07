@@ -56,7 +56,7 @@ class QSwitch(app_manager.RyuApp):
 
         ofp = datapath.ofproto
         ofp_parser = datapath.ofproto_parser
-
+        
         cookie = cookie_mask = 0
         table_id = 0
         idle_timeout = hard_timeout = 0
@@ -219,23 +219,33 @@ class QSwitch(app_manager.RyuApp):
                 if match is not None:
                     
                     self.logger.info("Match was not none; Proceeding to possibly add flow")
+
+                    # set priority for tcp and udp
+                    if t:
+                        priority = 1
+                    elif u:
+                        priority = 2
+                    else:
+                        priority = 3
                     
                     if msg.buffer_id != ofp.OFP_NO_BUFFER:
                         
                         self.logger.info("Message buffer ID was not \"no buffer\"; Proceeding to add a flow")
+
+                        self.send_flow_mod(
+                            dp, match, actions,
+                            new_priority=priority,
+                            new_buffer_id=msg.buffer_id
+                        )
                         
-                        # set priority for tcp and udp
-                        if t:
-                            self.send_flow_mod(dp, match, actions, 2, msg.buffer_id)
-                            return
-                        else:
-                            self.send_flow_mod(dp, match, actions, 3, msg.buffer_id)
-                            return
                     else:
                         self.logger.info(
                             "Message buffer ID was \"no buffer\"; Proceeding to add flow without specifying buffer"
                         )
-                        self.send_flow_mod(dp, match, actions, 1)
+                        self.send_flow_mod(
+                            dp, match, actions,
+                            new_priority=priority
+                        )
             
             # for p in pkt:
             #     # print(p.protocol_name, p)
@@ -259,6 +269,8 @@ class QSwitch(app_manager.RyuApp):
         if msg.buffer_id == ofp.OFP_NO_BUFFER:
             data = msg.data
 
-        out = ofp_parser.OFPPacketOut(datapath=dp, buffer_id=msg.buffer_id,
-                                  in_port=in_port, actions=actions, data=data)
+        out = ofp_parser.OFPPacketOut(
+            datapath=dp, buffer_id=msg.buffer_id,
+            in_port=in_port, actions=actions, data=data
+        )
         dp.send_msg(out)

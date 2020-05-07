@@ -36,7 +36,7 @@ install_apt_deps()
     # Optional plugins used to help development
    	apt install htop -y || die "Failed to install htop"
    	apt install nload -y || die "Failed to install nload"
-    apt install iftop -y || die "Failed to install htop"
+    apt install iftop -y || die "Failed to install iftop"
 }
 install_pip3_deps()
 {

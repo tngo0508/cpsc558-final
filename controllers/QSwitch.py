@@ -68,7 +68,8 @@ class QSwitch(app_manager.RyuApp):
         idle_timeout = hard_timeout = 0
         priority = new_priority
         buffer_id = [new_buffer_id if new_buffer_id else ofp.OFP_NO_BUFFER][0]
-        inst = [
+        
+        flow_instructions = [
             ofp_parser.OFPInstructionActions(
                 ofp.OFPIT_APPLY_ACTIONS,
                 actions
@@ -89,10 +90,11 @@ class QSwitch(app_manager.RyuApp):
         """
         req = ofp_parser.OFPFlowMod(
             datapath=datapath, priority=priority,
-            match=match, instructions=inst,
-            buffer_id=buffer_id
+            match=match, instructions=flow_instructions,
+            buffer_id=buffer_id,
+            command=ofp.OFPFC_ADD
         )
-
+        
         self.logger.info("Sending message to our datapath: " + str(req))
         datapath.send_msg(req)
         
@@ -102,13 +104,13 @@ class QSwitch(app_manager.RyuApp):
     def qswitch_features_handler(self, ev):
 
         # self.logger.info("Begin q_switch_features_handler")
-
+        
         dp = ev.msg.datapath
         ofproto = dp.ofproto
         ofp_parser = dp.ofproto_parser
-
+        
         msg = ev.msg
-
+        
         match = ofp_parser.OFPMatch()  # match all packets
         actions = [
             ofp_parser.OFPActionOutput(
@@ -117,7 +119,7 @@ class QSwitch(app_manager.RyuApp):
             )
         ]
         self.send_flow_mod(dp, match, actions, 0, ofproto.OFP_NO_BUFFER)
-
+    
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):
         

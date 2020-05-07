@@ -113,6 +113,7 @@ class QSwitch(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):
+        
         msg = ev.msg  # instance of OpenFlow messages
         # self.logger.info("Got message: " + str(msg))
         
@@ -127,7 +128,7 @@ class QSwitch(app_manager.RyuApp):
         eth = pkt.get_protocol(ethernet.ethernet)
         # print(pkt)
 
-        src_mac= eth.src
+        src_mac = eth.src
         dst_mac = eth.dst
         # self.logger.info("Packet is flowing from %s to %s", src, dst)
         
@@ -141,17 +142,18 @@ class QSwitch(app_manager.RyuApp):
             # self.logger.info("We already knew this port")
             out_port = self.get_macs_port(dst_mac)
         else:
-            self.logger.info("Didn't know where " + dst_mac + " is plugged in")
+            self.logger.info("Didn't know where " + dst_mac + " is plugged in; Will flood")
             out_port = ofp.OFPP_FLOOD
 
         # construct packet_out message and send it.
         actions = [ofp_parser.OFPActionOutput(out_port)]
         
-        
         # switch already knew this port, modify table flow to avoid packet_in next time
         if out_port != ofp.OFPP_FLOOD:
             
-            # # self.logger.info("Trying to modify the table flow to avoid packet_in next time")
+            self.logger.info("Didn't flood; Trying to modify the table flow to avoid packet_in next time")
+            self.logger.info("Packet is flowing from %s to %s", src_mac, dst_mac)
+            
             # match = ofp_parser.OFPMatch(in_port=in_port, eth_dst=dst_mac)
             # self.send_flow_mod(dp, match, actions, 1)
 
@@ -180,8 +182,13 @@ class QSwitch(app_manager.RyuApp):
 
             # inspired from https://github.com/knetsolutions/learn-sdn-with-ryu/blob/master/ryu-exercises/ex3_L4Match_switch.py
             if eth.ethertype == ether_types.ETH_TYPE_IP:
+    
+                self.logger.info("Got an IP type of ether packet")
+                
                 ip4 = pkt.get_protocol(ipv4.ipv4)
+                
                 self.logger.info('ipv4: %s', ip4)
+                
                 ip4_scr = ip4.src
                 ip4_dst = ip4.dst
                 protocol = ip4.proto
@@ -190,20 +197,23 @@ class QSwitch(app_manager.RyuApp):
                 if protocol == in_proto.IPPROTO_TCP:
                     self.logger.info('This packet is using TCP!')
                     t = pkt.get_protocol(tcp.tcp)
-                    match = ofp_parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ipv4_src=ip4.src, ipv4_dst=ip4.dst, ip_proto=protocol, tcp_src=t.src_port, tcp_dst=t.dst_port,)
+                    match = ofp_parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ipv4_src=ip4.src, ipv4_dst=ip4.dst, ip_proto=protocol, tcp_src=t.src_port, tcp_dst=t.dst_port)
                 elif protocol == in_proto.IPPROTO_ICMP:
                     match = ofp_parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ipv4_src=ip4.src, ipv4_dst=ip4.dst, ip_proto=protocol)
                 elif protocol == in_proto.IPPROTO_UDP:
                     self.logger.info('This packet is using UDP!')
                     u = pkt.get_protocol(udp.udp)
-                    match = ofp_parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ipv4_src=ip4.src, ipv4_dst=ip4.dst, ip_proto=protocol, udp_src=u.src_port, udp_dst=u.dst_port,)
+                    match = ofp_parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ipv4_src=ip4.src, ipv4_dst=ip4.dst, ip_proto=protocol, udp_src=u.src_port, udp_dst=u.dst_port)
+                else:
+                    self.logger.info("Don't know how to handle protocol: " + str(protocol) + "; Won't add any rules")
+                    match = None
                 # self.logger.info(pkt.get_protocol(tcp.tcp))
                 # if pkt.get_protocol(tcp.tcp):
                 #     self.logger.info('TCP!')
 
                 self.logger.info('buffer_id: %s', msg.buffer_id)
                 self.logger.info('OFP_NO_BUFFER %s', ofp.OFP_NO_BUFFER)
-                if msg.buffer_id != ofp.OFP_NO_BUFFER:
+                if match is not None and msg.buffer_id != ofp.OFP_NO_BUFFER:
                     # set priority for tcp and udp
                     if t:
                         self.send_flow_mod(dp, match, actions, 2, msg.buffer_id)
@@ -239,4 +249,3 @@ class QSwitch(app_manager.RyuApp):
         out = ofp_parser.OFPPacketOut(datapath=dp, buffer_id=msg.buffer_id,
                                   in_port=in_port, actions=actions, data=data)
         dp.send_msg(out)
-        

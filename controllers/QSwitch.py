@@ -157,7 +157,7 @@ class QSwitch(app_manager.RyuApp):
         else:
             self.logger.info("Didn't know where " + dst_mac + " is plugged in; Will flood")
             out_port = ofp.OFPP_FLOOD
-
+        
         # construct packet_out message and send it.
         actions = [ofp_parser.OFPActionOutput(out_port)]
         
@@ -241,6 +241,15 @@ class QSwitch(app_manager.RyuApp):
                     else:
                         priority = 3
                     
+                    # Debug
+                    priority = 1
+
+                    self.send_flow_mod(
+                        dp, match, actions,
+                        new_priority=priority
+                    )
+                    
+                    """
                     if msg.buffer_id != ofp.OFP_NO_BUFFER:
                         
                         self.logger.info("Message buffer ID was not \"no buffer\"; Proceeding to add a flow")
@@ -259,15 +268,14 @@ class QSwitch(app_manager.RyuApp):
                             dp, match, actions,
                             new_priority=priority
                         )
+                    """
             
             # for p in pkt:
             #     # print(p.protocol_name, p)
             #     self.logger.info(p)
-            
-            # Switch didn't already know this port
+        
+        # Switch didn't already know this port
         else:
-            # self.logger.info("Switch didn't already know destination " + str(dst) + " mapped to port " + str(out_port))
-            # self.logger.info("Mac-to-Port dictionary looks like: " + str(self.mac_to_port))
             pass
         
         # out = ofp_parser.OFPPacketOut(

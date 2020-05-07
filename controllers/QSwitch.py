@@ -114,6 +114,10 @@ class QSwitch(app_manager.RyuApp):
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):
         
+        # Blehhhh
+        self.logger.info("")
+        self.logger.info("Begin the packet_in_handler")
+        
         msg = ev.msg  # instance of OpenFlow messages
         # self.logger.info("Got message: " + str(msg))
         
@@ -274,3 +278,5 @@ class QSwitch(app_manager.RyuApp):
             in_port=in_port, actions=actions, data=data
         )
         dp.send_msg(out)
+        
+        self.logger.info("End packet_in_handler")

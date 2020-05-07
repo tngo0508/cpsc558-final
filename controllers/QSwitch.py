@@ -213,16 +213,18 @@ class QSwitch(app_manager.RyuApp):
 
                 self.logger.info('buffer_id: %s', msg.buffer_id)
                 self.logger.info('OFP_NO_BUFFER %s', ofp.OFP_NO_BUFFER)
-                if match is not None and msg.buffer_id != ofp.OFP_NO_BUFFER:
-                    # set priority for tcp and udp
-                    if t:
-                        self.send_flow_mod(dp, match, actions, 2, msg.buffer_id)
-                        return
+                if match is not None:
+                    if msg.buffer_id != ofp.OFP_NO_BUFFER:
+                        # set priority for tcp and udp
+                        if t:
+                            self.send_flow_mod(dp, match, actions, 2, msg.buffer_id)
+                            return
+                        else:
+                            self.send_flow_mod(dp, match, actions, 3, msg.buffer_id)
+                            return
                     else:
-                        self.send_flow_mod(dp, match, actions, 3, msg.buffer_id)
-                        return
-                # else:
-                #     self.send_flow_mod(dp, match, actions, 1)
+                        # self.send_flow_mod(dp, match, actions, 1)
+                        pass
 
             # for p in pkt:
             #     # print(p.protocol_name, p)

@@ -232,9 +232,11 @@ class QSwitch(app_manager.RyuApp):
                             self.send_flow_mod(dp, match, actions, 3, msg.buffer_id)
                             return
                     else:
-                        self.logger.info("Message buffer ID was \"no buffer\"; Will not add a flow now")
-                        # self.send_flow_mod(dp, match, actions, 1)
-
+                        self.logger.info(
+                            "Message buffer ID was \"no buffer\"; Proceeding to add flow without specifying buffer"
+                        )
+                        self.send_flow_mod(dp, match, actions, 1)
+            
             # for p in pkt:
             #     # print(p.protocol_name, p)
             #     self.logger.info(p)

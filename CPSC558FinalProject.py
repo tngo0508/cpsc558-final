@@ -195,8 +195,8 @@ class CPSC558FinalProject:
 			"--", "--id=@newqos", "create", "qos", "type=trtcm-policer", "queues=0=@q0,1=@q1",
 			# "--", "--id=@q0", "create", "queue", "other-config:cir=41600000", "other-config:eir=0", "other-config:priority=0",
 			# "--", "--id=@q1", "create", "queue", "other-config:cir=0", "other-config:eir=41600000", "other-config:priority=1"
-			"--", "--id=@q0", "create", "queue", "other-config:priority=0",
-			"--", "--id=@q1", "create", "queue", "other-config:priority=1"
+			"--", "--id=@q0", "create", "queue", "other-config:priority=0", "other-config:maxrate=1000000",
+			"--", "--id=@q1", "create", "queue", "other-config:priority=1", "other-config:maxrate=1000000"
 		])
 		
 		process = subprocess.Popen(args=args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

@@ -25,7 +25,7 @@ class VideoClient:
 	__socket = None
 	__listener_thread = None
 	
-	__wanted_data_size_megabytes = 10
+	__wanted_data_size_megabytes = 50
 	__beg_string = "MOAR PLZ!\n".encode()
 	
 	def __init__(self, run_name, name, server_host=None, server_port=None):

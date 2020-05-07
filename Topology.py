@@ -87,30 +87,54 @@ class Topology(Topo):
 		# Create file server host
 		log.info("Creating file server host")
 		self.add_host_with_addresses(self.__file_server_name)
+		"""
 		self.addLink(
 			self.__main_switch_name,
 			self.__file_server_name,
 			intfName1="switch-fs",
 			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_SERVERS_MBPS, delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
 		)
+		"""
+		self.add_link_to_main_switch(
+			node_name=self.__file_server_name,
+			interface_name="switch-fs",
+			preferred_mbps=self.__BANDWIDTH_LIMIT_SERVERS_MBPS,
+			preferred_delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
+		)
 		
 		# Create video server host
 		log.info("Creating video server host")
 		self.add_host_with_addresses(self.__video_server_name)
+		"""
 		self.addLink(
 			self.__main_switch_name,
 			self.__video_server_name,
 			intfName1="switch-vs",
 			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_SERVERS_MBPS, delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
 		)
+		"""
+		self.add_link_to_main_switch(
+			node_name=self.__video_server_name,
+			interface_name="switch-vs",
+			preferred_mbps=self.__BANDWIDTH_LIMIT_SERVERS_MBPS,
+			preferred_delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
+		)
 		
 		# Create our tattle tail host
 		log.info("Creating tattle tail host")
 		self.add_host_with_addresses(self.__tattle_tail_name)
+		"""
 		self.addLink(
 			self.__main_switch_name, self.__tattle_tail_name,
 			intfName1="switch-tt",
 			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+		)
+		"""
+		self.add_link_to_main_switch(
+			node_name=self.__tattle_tail_name,
+			interface_name="switch-tt",
+			preferred_mbps=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS,
+			preferred_delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
 		)
 		
 		# Create file clients
@@ -119,11 +143,19 @@ class Topology(Topo):
 			client_name = self.__file_client_name_prefix + str(i + 1)
 			log.info("Creating file client: " + client_name)
 			self.add_host_with_addresses(client_name)
+			"""
 			self.addLink(
 				self.__main_switch_name,
 				client_name,
 				intfName1="switch-" + client_name,
 				cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+			)
+			"""
+			self.add_link_to_main_switch(
+				node_name=client_name,
+				interface_name="switch-" + client_name,
+				preferred_mbps=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS,
+				preferred_delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
 			)
 			self.__file_client_names.append(client_name)
 		
@@ -133,11 +165,19 @@ class Topology(Topo):
 			client_name = self.__video_client_name_prefix + str(i + 1)
 			log.info("Creating video client: " + client_name)
 			self.add_host_with_addresses(client_name)
+			"""
 			self.addLink(
 				self.__main_switch_name,
 				client_name,
 				intfName1="switch-" + client_name,
 				cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+			)
+			"""
+			self.add_link_to_main_switch(
+				node_name=client_name,
+				interface_name="switch-" + client_name,
+				preferred_mbps=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS,
+				preferred_delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
 			)
 			self.__video_client_names.append(client_name)
 		
@@ -203,6 +243,30 @@ class Topology(Topo):
 		)
 		
 		return host
+	
+	def add_link_to_main_switch(self, node_name, interface_name=None, preferred_mbps=None, preferred_delay=None):
+		
+		# Yes disable because some forum said this might interfere with vswitch queue stuff
+		disable_limiting = True
+		
+		if disable_limiting is False and (preferred_mbps is not None or preferred_delay is not None):
+			
+			self.addLink(
+				self.__main_switch_name,
+				node_name,
+				intfName1=interface_name,
+				cls=TCLink,
+				bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS,
+				delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+			)
+			
+		else:
+			
+			self.addLink(
+				self.__main_switch_name,
+				node_name,
+				intfName1=interface_name
+			)
 	
 	def get_file_server_instance(self):
 		

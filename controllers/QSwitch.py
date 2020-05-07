@@ -51,8 +51,8 @@ class QSwitch(app_manager.RyuApp):
 
     def send_flow_mod(self, datapath, match, actions, new_priority=0, new_buffer_id=None):
 
-        # self.logger.info("Begin send_flow_mod()")
-        # self.logger.info("Actions: " + str(actions))
+        self.logger.info("Begin send_flow_mod()")
+        self.logger.info("Actions: " + str(actions))
 
         ofp = datapath.ofproto
         ofp_parser = datapath.ofproto_parser
@@ -87,9 +87,10 @@ class QSwitch(app_manager.RyuApp):
             buffer_id=buffer_id
         )
 
-        # self.logger.info("Sending message to our datapath: " + str(req))
+        self.logger.info("Sending message to our datapath: " + str(req))
         datapath.send_msg(req)
-
+        
+        self.logger.info("End send_flow_mod")
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def qswitch_features_handler(self, ev):

@@ -18,7 +18,7 @@ from ryu.controller import ofp_event
 from ryu.controller.handler import HANDSHAKE_DISPATCHER, MAIN_DISPATCHER, CONFIG_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3, ofproto_v1_0, ofproto_v1_2, ofproto_v1_4, ofproto_v1_5
-from ryu.lib.packet import packet, in_proto, tcp, udp, ipv4, ipv6
+from ryu.lib.packet import packet, in_proto, icmp, tcp, udp, ipv4, ipv6
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 # from ryu.lib.mac import haddr_to_bin
@@ -35,6 +35,8 @@ class QSwitch(app_manager.RyuApp):
 		ofproto_v1_5.OFP_VERSION
 	]
 	
+	__flow_add_counter = 0
+	
 	def __init__(self, *args, **kwargs):
 		
 		super(QSwitch, self).__init__(*args, **kwargs)
@@ -44,6 +46,14 @@ class QSwitch(app_manager.RyuApp):
 		self.mac_to_port = collections.defaultdict()  # used to learn MAC addr
 		
 		self.logger.info(type(self).__name__ + " has initialized")
+	
+	def __del__(self):
+	
+		self.logger.info("Begin __del__")
+		
+		self.logger.info("Tried to add a flow " + str(self.__flow_add_counter) + " times")
+		
+		self.logger.info("End __del__")
 	
 	def do_we_know_mac(self, mac):
 		
@@ -65,31 +75,36 @@ class QSwitch(app_manager.RyuApp):
 		
 		return None
 	
+	def is_packet_ipv4(self, p_in):
+		
+		d = p_in.get_protocol(ipv4.ipv4)
+		if d:
+			return True
+		
+		return False
+	
+	def is_packet_ipv6(self, p_in):
+		
+		d = p_in.get_protocol(ipv6.ipv6)
+		if d:
+			return True
+		
+		return False
+	
+	def get_packet_ip_proto_version(self, p):
+	
+		if self.is_packet_ipv4(p):
+			return 4
+		elif self.is_packet_ipv6(p):
+			return 6
+		
+		return None
+	
 	def is_packet_tcp(self, p_in):
 		
 		t = p_in.get_protocol(tcp.tcp)
 		if t:
 			return True
-		return False
-		
-		
-		
-		datagram4 = p_in.get_protocol(ipv4.ipv4)
-		if datagram4 is not None:
-			self.logger.info("Found an IPv4 packet: " + str(datagram4))
-			if datagram4.proto == in_proto.IPPROTO_TCP:
-				self.logger.info("Packet was TCP!")
-				return True
-			else:
-				self.logger.info("Not TCP; Packet had proto: " + str(datagram4.proto))
-				pass
-		
-		datagram6 = p_in.get_protocol(ipv6.ipv6)
-		if datagram6:
-			self.logger.info("Found an IPv6 packet: " + str(datagram6))
-			if datagram6.nxt == in_proto.IPPROTO_UDP:
-				return True
-		
 		return False
 	
 	def is_packet_udp(self, p_in):
@@ -98,31 +113,22 @@ class QSwitch(app_manager.RyuApp):
 		if u:
 			return True
 		return False
+	
+	def is_packet_icmp(self, p_in):
 		
-		datagram4 = p_in.get_protocol(ipv4.ipv4)
-		if datagram4 is not None:
-			# self.logger.info("Found an IPv4 packet: " + str(datagram4))
-			if datagram4.proto == in_proto.IPPROTO_UDP:
-				# self.logger.info("Packet was UDP!")
-				return True
-			else:
-				# self.logger.info("Not UDP; Packet had proto: " + str(datagram4.proto))
-				pass
-		
-		datagram6 = p_in.get_protocol(ipv6.ipv6)
-		if datagram6:
-			# self.logger.info("Found an IPv6 packet: " + str(datagram6))
-			if datagram6.nxt == in_proto.IPPROTO_UDP:
-				return True
-		
+		i = p_in.get_protocol(icmp.icmp)
+		if i:
+			return True
 		return False
 	
 	# function template at https://ryu.readthedocs.io/en/latest/ofproto_v1_3_ref.html#modify-state-messages
 	def send_flow_mod(self, datapath, match, actions, new_priority=0):
 		
-		self.logger.info("Begin send_flow_mod()")
+		self.logger.info("\nBegin send_flow_mod(); " + str(self.__flow_add_counter) + " times")
 		self.logger.info("Match: " + str(match))
 		self.logger.info("Actions: " + str(actions))
+		
+		self.__flow_add_counter += 1
 		
 		ofp = datapath.ofproto
 		ofp_parser = datapath.ofproto_parser
@@ -153,7 +159,8 @@ class QSwitch(app_manager.RyuApp):
 		"""
 		req = ofp_parser.OFPFlowMod(
 			datapath=datapath, priority=priority,
-			match=match, instructions=inst
+			match=match, instructions=inst,
+			idle_timeout=idle_timeout, hard_timeout=hard_timeout
 		)
 		
 		# self.logger.info("Sending message to our datapath: " + str(req))
@@ -164,7 +171,7 @@ class QSwitch(app_manager.RyuApp):
 	@set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
 	def simple_switch_features_handler(self, ev):
 		
-		# self.logger.info("Begin simple_switch_features_handler")
+		self.logger.info("Begin simple_switch_features_handler")
 		
 		dp = ev.msg.datapath
 		ofproto = dp.ofproto
@@ -194,14 +201,14 @@ class QSwitch(app_manager.RyuApp):
 		
 		# represent a datapath(switch) which corresponding to OpenFlow that issued the message
 		dp = msg.datapath
-		# self.logger.info("Got datapath: " + str(dp))
+		# self.logger.info("Got datapath: " + str(dp.id))
 		
 		ofp = dp.ofproto  # the protocol that Openflow version in use
 		ofp_parser = dp.ofproto_parser
 		
 		pkt = packet.Packet(msg.data)
 		eth = pkt.get_protocol(ethernet.ethernet)
-		# print(pkt)
+		# self.logger.info("Packet: %s", pkt)
 		
 		src_mac = eth.src
 		dst_mac = eth.dst
@@ -220,108 +227,88 @@ class QSwitch(app_manager.RyuApp):
 			self.logger.info("Didn't know where " + dst_mac + " is plugged in")
 			out_port = ofp.OFPP_FLOOD
 		
-		# construct packet_out message and send it.
+		# Start with just an action that specifies which port(s) to send out on
 		actions = [ofp_parser.OFPActionOutput(out_port)]
 		
-		# If this is a TCP or UDP packet, let's like... also match on that bro
-		is_tcp = is_udp = False
-		if self.is_packet_tcp(pkt):
-			self.logger.info("We seem to have found a TCP packet")
-			is_tcp = True
-		elif self.is_packet_udp(pkt):
-			self.logger.info("We seem to have found a UDP packet")
-			is_udp = True
-		else:
-			self.logger.info("Packet doesn't seem to be TCP or UDP")
-		
-		# Let's add a flow if we meet the following conditions:
-		# 1. We're not flooding
-		# 2. This is a TCP or UDP packet
-		if (is_tcp or is_udp) and out_port != ofp.OFPP_FLOOD:
+		# Let's add a flow if we're not flooding
+		if out_port != ofp.OFPP_FLOOD:
 			
-			self.logger.info("Trying to modify the table flow to avoid packet_in next time")
+			self.logger.info("\nWe are not flooding; Will try to save a new flow")
 			
-			# Add TCP or UDP to the match
-			if is_tcp:
-				self.logger.info("Gonna match on TCP")
-				match_in_proto = in_proto.IPPROTO_TCP
-			else:
-				self.logger.info("Gonna match on UDP")
-				match_in_proto = in_proto.IPPROTO_UDP
+			flow_entry_priority = 1
+			
+			# Start some match arguments
+			# Always match on ethertype so we don't stomp on our IP flows
+			match_extra_kwargs = dict({
+				"eth_type": eth.ethertype
+			})
+			
+			# Try to determine if this is a TCP or UDP flow (or nonw)
+			is_tcp = self.is_packet_tcp(pkt)
+			is_udp = self.is_packet_udp(pkt)
+			is_icmp = self.is_packet_icmp(pkt)
+			
+			#
+			self.logger.info(
+				"ethertype %s; is_tcp %s; is_udp %s; is_icmp %s", eth.ethertype, is_tcp, is_udp, is_icmp
+			)
+			
+			# Enhance the match and use the queue if we're a TCP or UDP flow
+			if eth.ethertype == ether_types.ETH_TYPE_IP and (is_tcp or is_udp or is_icmp):
+				
+				self.logger.info("We appear to have a TCP or UDP flow")
+				
+				queue_number = 0
+				
+				ip_version = self.get_packet_ip_proto_version(pkt)
+				if is_tcp:
+					ip_proto = in_proto.IPPROTO_TCP
+				elif is_udp:
+					ip_proto = in_proto.IPPROTO_UDP
+				else:
+					ip_proto = in_proto.IPPROTO_ICMP
+				
+				match_extra_kwargs["ip_proto"] = ip_proto
+				
+				if is_tcp:
+					# self.logger.info("Gonna match on a TCP port")
+					t = pkt.get_protocol(tcp.tcp)
+					match_extra_kwargs["tcp_dst"] = t.dst_port
+				elif is_udp:
+					# self.logger.info("Gonna match on a UDP port")
+					u = pkt.get_protocol(udp.udp)
+					match_extra_kwargs["udp_dst"] = u.dst_port
+					queue_number = 1
+				else:
+					
+					ic = pkt.get_protocol(icmp.icmp)
+					
+					if ip_version == 6:
+						match_extra_kwargs["icmpv4_type"] = ic.type
+					else:
+						match_extra_kwargs["icmpv6_type"] = ic.type
+				
+				# Add an action that sends this flow to a queue
+				actions.insert(0, ofp_parser.OFPActionSetQueue(queue_number))
 			
 			# Start the match object
-			match = ofp_parser.OFPMatch(in_port=in_port, eth_dst=dst_mac, in_proto=match_in_proto)
-			
-			
+			# self.logger.info("Setting match kwargs: " + str(match_extra_kwargs))
+			match = ofp_parser.OFPMatch(
+				eth_src=src_mac,
+				eth_dst=dst_mac,
+				in_port=in_port,
+				**match_extra_kwargs
+			)
+			self.logger.info("Match is now: " + str(match))
 			
 			# Send out the flow, woot
-			self.send_flow_mod(dp, match, actions, 1)
+			self.send_flow_mod(dp, match, actions, flow_entry_priority)
 		
 		# Switch didn't already know this port
 		else:
 			# self.logger.info("Switch didn't already know destination " + str(dst) + " mapped to port " + str(out_port))
 			# self.logger.info("Mac-to-Port dictionary looks like: " + str(self.mac_to_port))
 			pass
-		
-		
-		"""
-		
-		#   Extra QoS by datagram type; Look for IP datagrams
-		if eth.ethertype == ether_types.ETH_TYPE_IP:
-			
-			self.logger.info("Got an IP type of ether packet")
-	
-			# ip4 = pkt.get_protocol(ipv4.ipv4)
-			# self.logger.info('ipv4: %s', ip4)
-			protocol = ip4.proto
-			# self.logger.info(in_proto)
-			t = u = None
-			if protocol == in_proto.IPPROTO_TCP:
-				self.logger.info('This packet is using TCP!')
-				t = pkt.get_protocol(tcp.tcp)
-				match = ofp_parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ipv4_src=ip4.src, ipv4_dst=ip4.dst,
-											ip_proto=protocol, tcp_src=t.src_port, tcp_dst=t.dst_port)
-			elif protocol == in_proto.IPPROTO_ICMP:
-				match = ofp_parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ipv4_src=ip4.src, ipv4_dst=ip4.dst,
-											ip_proto=protocol)
-			elif protocol == in_proto.IPPROTO_UDP:
-				self.logger.info('This packet is using UDP!')
-				u = pkt.get_protocol(udp.udp)
-				match = ofp_parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ipv4_src=ip4.src, ipv4_dst=ip4.dst,
-											ip_proto=protocol, udp_src=u.src_port, udp_dst=u.dst_port)
-			else:
-				self.logger.info("Don't know how to handle protocol: " + str(protocol) + "; Won't add any rules")
-				match = None
-			# self.logger.info(pkt.get_protocol(tcp.tcp))
-			# if pkt.get_protocol(tcp.tcp):
-			#     self.logger.info('TCP!')
-	
-			if msg.buffer_id == ofp.OFP_NO_BUFFER:
-				self.logger.info("This message doesn't reference a buffer")
-			else:
-				self.logger.info('Buffer ID: %s', msg.buffer_id)
-	
-			if match is not None:
-		
-				self.logger.info("Match was not none; Proceeding to possibly add flow")
-		
-				# set priority for tcp and udp
-				if t:
-					priority = 1
-				elif u:
-					priority = 2
-				else:
-					priority = 3
-		
-				# Debug
-				priority = 1
-		
-				self.send_flow_mod(
-					dp, match, actions,
-					new_priority=priority
-				)
-		
-		"""
 		
 		out = ofp_parser.OFPPacketOut(
 			datapath=dp,

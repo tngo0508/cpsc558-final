@@ -13,6 +13,7 @@ from mininet.util import custom as mininet_custom
 from mininet.node import Ryu
 
 import os
+import subprocess
 import re
 import sys
 
@@ -113,6 +114,9 @@ class CPSC558FinalProject:
 			return
 		log.info("Mininet found a controller to connect to")
 		
+		# Testing!
+		self.create_qos_queues()
+		
 		# Ping tests
 		self.ping_all()
 		
@@ -174,6 +178,50 @@ class CPSC558FinalProject:
 			os.unlink(file_path)
 		
 		return file_path
+	
+	# Heavy inspiration: http://docs.openvswitch.org/en/latest/topics/dpdk/qos/
+	# Woot!
+	def create_qos_queues(self):
+		
+		log = self.__logger.get()
+		
+		# ovs_path = "/usr/bin/ovs-vsctl"
+		ovs_path = "ovs-vsctl"
+		
+		args = list([
+			ovs_path,
+			"--", "set", "port", "switch-fs", "qos=@newqos",
+			"--", "set", "port", "switch-vs", "qos=@newqos",
+			"--", "--id=@newqos", "create", "qos", "type=trtcm-policer", "queues=0=@q0,1=@q1",
+			# "--", "--id=@q0", "create", "queue", "other-config:cir=41600000", "other-config:eir=0", "other-config:priority=0",
+			# "--", "--id=@q1", "create", "queue", "other-config:cir=0", "other-config:eir=41600000", "other-config:priority=1"
+			"--", "--id=@q0", "create", "queue", "other-config:priority=0",
+			"--", "--id=@q1", "create", "queue", "other-config:priority=1"
+		])
+		
+		process = subprocess.Popen(args=args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		result = process.communicate()
+		log.info("Executed uhm ... " + str(result))
+		
+		process = subprocess.Popen(
+			args=[
+				ovs_path, "show"
+			],
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE)
+		result = process.communicate()
+		log.info("Executed show ... " + str(result))
+		
+		"""
+		ovs-vsctl \
+			-- set port switch-fs qos=@newqos \
+			-- set port switch-vs qos=@newqos \
+			-- --id=@newqos create qos type=trtcm-policer queues=0=@q0,1=@q1 \
+			-- --id=@q0 create queue other-config:cir=41600000 other-config:eir=0 \
+			-- --id=@q1 create queue other-config:cir=0 other-config:eir=41600000 \
+			&& ovs-vsctl show
+		"""
+		
 	
 	def start_tattle_tail(self, use_log: bool = True):
 		

@@ -7,6 +7,7 @@ import graphviz
 from mininet.net import Mininet
 from mininet.topo import Topo
 from mininet.link import TCLink
+from mininet.node import OVSSwitch
 
 import os
 
@@ -184,7 +185,8 @@ class Topology(Topo):
 		return self.addSwitch(
 			name,
 			mac=mac,
-			ip=ip
+			ip=ip,
+			cls=OVSSwitch
 		)
 	
 	def add_host_with_addresses(self, name):

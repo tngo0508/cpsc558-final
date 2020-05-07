@@ -52,7 +52,11 @@ class QSwitch(app_manager.RyuApp):
     def send_flow_mod(self, datapath, match, actions, new_priority=0, new_buffer_id=None):
 
         self.logger.info("Begin send_flow_mod()")
+        self.logger.info("Datapath: " + str(datapath))
+        self.logger.info("Match: " + str(match))
         self.logger.info("Actions: " + str(actions))
+        self.logger.info("New priority: " + str(new_priority))
+        self.logger.info("New buffer: " + str(new_buffer_id))
 
         ofp = datapath.ofproto
         ofp_parser = datapath.ofproto_parser

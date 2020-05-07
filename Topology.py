@@ -89,6 +89,7 @@ class Topology(Topo):
 		self.addLink(
 			self.__main_switch_name,
 			self.__file_server_name,
+			intfName1="switch-fs",
 			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_SERVERS_MBPS, delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
 		)
 		
@@ -98,6 +99,7 @@ class Topology(Topo):
 		self.addLink(
 			self.__main_switch_name,
 			self.__video_server_name,
+			intfName1="switch-vs",
 			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_SERVERS_MBPS, delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
 		)
 		
@@ -106,6 +108,7 @@ class Topology(Topo):
 		self.add_host_with_addresses(self.__tattle_tail_name)
 		self.addLink(
 			self.__main_switch_name, self.__tattle_tail_name,
+			intfName1="switch-tt",
 			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
 		)
 		
@@ -118,6 +121,7 @@ class Topology(Topo):
 			self.addLink(
 				self.__main_switch_name,
 				client_name,
+				intfName1="switch-" + client_name,
 				cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
 			)
 			self.__file_client_names.append(client_name)
@@ -131,6 +135,7 @@ class Topology(Topo):
 			self.addLink(
 				self.__main_switch_name,
 				client_name,
+				intfName1="switch-" + client_name,
 				cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
 			)
 			self.__video_client_names.append(client_name)

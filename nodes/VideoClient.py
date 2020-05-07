@@ -4,6 +4,7 @@ from Logger import Logger
 from Benchmarker import Benchmarker
 
 
+import random
 import select
 import socket
 import subprocess
@@ -86,7 +87,7 @@ class VideoClient:
 		
 		while self.__benchmarker.is_running():
 			
-			# log.info("Data receiver iteration")
+			log.debug("Data receiver iteration")
 			
 			if self.socket_has_data():
 				
@@ -95,7 +96,7 @@ class VideoClient:
 				received, sender = self.__socket.recvfrom(1048576)
 				self.__benchmarker.increased_bytes_received(len(received))
 				
-				log.debug(
+				log.info(
 					"Received " + str(len(received)) + " bytes from" + str(sender)
 					+ "; Total = " + str(self.__benchmarker.get_bytes_received())
 				)
@@ -115,12 +116,18 @@ class VideoClient:
 		self.init_data_receiver()
 		while self.__benchmarker.get_bytes_received() < wanted_bytes:
 			
-			if not self.socket_has_data():
-				self.ask_server_for_data()
-			else:
-				log.debug("Have data ... will wait")
+			log.info("Leech loop iteration")
 			
-			time.sleep(.001)
+			if not self.socket_has_data():
+				
+				self.ask_server_for_data()
+				
+				random_millis = random.random()
+				time.sleep(random_millis/1000)
+				
+			else:
+				log.info("Have data ... will wait")
+				time.sleep(.001)
 		
 		self.__benchmarker.stop()
 		log.info(self.__benchmarker)
@@ -129,17 +136,17 @@ class VideoClient:
 	
 	def ask_server_for_data(self):
 		
-		# log = self.__logger.get()
+		log = self.__logger.get()
 		
-		# log.debug("Asking server for data: " + str(self.__server_host) + "::" + str(self.__server_port))
+		log.info("Asking server for data: " + str(self.__server_host) + "::" + str(self.__server_port))
 		self.__socket.sendto(self.__beg_string, (self.__server_host, self.__server_port))
-		# log.debug("Done asking server for data")
+		# log.info("Done asking server for data")
 		
 	def socket_has_data(self):
 		
 		# log = self.__logger.get()
 		
-		# log.debug("Checking socket for data")
+		# log.info("Checking socket for data")
 		if self.__socket:
 			read_sockets, write_sockets, error_sockets = select.select([self.__socket], [], [], 0)
 			for sock in read_sockets:
@@ -147,7 +154,7 @@ class VideoClient:
 					# log.debug("Socket has data")
 					return True
 		
-		# log.debug("Socket has no data")
+		# log.info("Socket has no data")
 		
 		return False
 	
@@ -156,6 +163,7 @@ class VideoClient:
 		self.__logger.get().info("Making sure we're not listening")
 		
 		if self.__socket is not None:
+			
 			self.__logger.get().info("We were listening; Shutting down")
 			
 			self.__socket.close()

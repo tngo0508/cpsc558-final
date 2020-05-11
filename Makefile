@@ -76,6 +76,7 @@ menu:
 	@echo "make run                   ===> Run all our tests and stuff"
 	@echo
 	@echo "** Run single tests **"
+	@echo "make run-single-hub               ===> Run the dumb hub test"
 	@echo "make run-single-switch     ===> Run the simple switch test"
 	@echo "make run-single-qswitch    ===> Run the qswitch test"
 	@echo
@@ -156,11 +157,27 @@ run-prepare:	deploy
 run:	run-prepare
 	$(call say,Running our tests and stuff)
 	$(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" &&  ./main.py --run --run-name demo" \
-		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name hub" \
+		&& $(MAKE) run-hub \
 		&& $(MAKE) run-switch  \
 		&& $(MAKE) run-qswitch  \
 		&& $(MAKE) pull-logs
 .PHONY:	run
+
+
+# Single test for our DumbHub
+run-single-hub:	run-prepare
+	$(call say,Running DumbHub tests)
+	$(MAKE) run-hub \
+		&& $(MAKE) pull-logs
+.PHONY: run-dumbhub
+
+
+# Run our DumbHub tests
+run-hub:	|
+	$(call say,Running DumbHub tests)
+	$(MAKE) clean-mininet-state \
+		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name hub"
+.PHONY:	run-switch
 
 
 # Single test for our Simple Switch
@@ -174,7 +191,8 @@ run-single-switch:	run-prepare
 # Run our Simple Switch tests
 run-switch:	|
 	$(call say,Running Simple Switch tests)
-	$(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name switch"
+	$(MAKE) clean-mininet-state \
+		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name switch"
 .PHONY:	run-switch
 
 

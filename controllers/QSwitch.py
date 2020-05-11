@@ -228,7 +228,11 @@ class QSwitch(app_manager.RyuApp):
 			out_port = ofp.OFPP_FLOOD
 		
 		# Start with just an action that specifies which port(s) to send out on
-		actions = [ofp_parser.OFPActionOutput(out_port)]
+		actions = [
+			ofp_parser.OFPActionOutput(
+				out_port
+			)
+		]
 		
 		# Let's add a flow if we're not flooding
 		if out_port != ofp.OFPP_FLOOD:

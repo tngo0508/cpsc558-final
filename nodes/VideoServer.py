@@ -15,7 +15,7 @@ class VideoServer(ServerBase):
 	# https://stackoverflow.com/questions/53530631/failed-to-send-bytes-over-sockets-message-too-long
 	__udp_max_bytes = 65507
 	
-	__megabytes_to_send = 500
+	__megabytes_to_send = 100
 	
 	__handled_clients = list()
 	

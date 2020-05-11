@@ -471,8 +471,8 @@ class Topology(Topo):
 		args = list([
 			ovs_path,
 			"--", "--id=@newqos", "create", "qos", "type=" + qos_type, "queues=0=@q0,1=@q1",
-			"--", "--id=@q0", "create", "queue", "other-config:priority=0",
-			"--", "--id=@q1", "create", "queue", "other-config:priority=1"
+			"--", "--id=@q0", "create", "queue", "other-config:priority=0", "other-config:max-rate=100000000",
+			"--", "--id=@q1", "create", "queue", "other-config:priority=1", "other-config:max-rate=100000000"
 		])
 		for intf_name in self.__main_switch_instance.intfNames():
 			if intf_name != "lo":

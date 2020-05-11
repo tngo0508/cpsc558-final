@@ -18,7 +18,7 @@ class FileClient:
 	__default_request_retries = 100
 	
 	#
-	__downloads_count = 5
+	__downloads_count = 1
 	
 	def __init__(self, run_name=None, name=None, server_host=None, server_port=None):
 		

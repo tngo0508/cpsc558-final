@@ -413,7 +413,7 @@ class CPSC558FinalProject:
 				# Bytes received
 				match = pattern_bytes_received.search(s)
 				if match is None:
-					raise Exception("Failed to parse node; Cannot find bytes received!")
+					raise Exception("Failed to parse node; Cannot find bytes received in: " + node_log_file_name)
 				node_bytes = int(match.group("bytes"))
 				total_bytes += node_bytes
 				log.info(

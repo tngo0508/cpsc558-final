@@ -54,10 +54,10 @@ class Topology(Topo):
 	__ip_counter = 1
 	
 	__BANDWIDTH_LIMIT_SERVERS_MBPS = 1000
-	__BANDWIDTH_LIMIT_SERVERS_DELAY = "1ms"
+	__BANDWIDTH_LIMIT_SERVERS_DELAY = "0.5ms"
 	
 	__BANDWIDTH_LIMIT_CLIENTS_MBPS = 100
-	__BANDWIDTH_LIMIT_CLIENTS_DELAY = "2ms"
+	__BANDWIDTH_LIMIT_CLIENTS_DELAY = "1ms"
 	
 	def __init__(self, logger):
 		
@@ -252,7 +252,7 @@ class Topology(Topo):
 	def add_link_to_main_switch(self, node_name, interface_name=None, preferred_mbps=None, preferred_delay=None):
 		
 		# Yes disable because some forum said this might interfere with vswitch queue stuff
-		disable_limiting = False
+		disable_limiting = True
 		
 		if disable_limiting is False and (preferred_mbps is not None or preferred_delay is not None):
 			
@@ -458,7 +458,7 @@ class Topology(Topo):
 		
 		log = self.__logger.get()
 		
-		result = self.__main_switch_instance.setup()
+		self.__main_switch_instance.setup()
 		
 		# ovs_path = "/usr/bin/ovs-vsctl"
 		ovs_path = "ovs-vsctl"
@@ -466,43 +466,26 @@ class Topology(Topo):
 		# qos_type = "trtcm-policer"
 		qos_type = "linux-htb"
 		
-		"""
-		V1
-		args = list([
-			ovs_path,
-			"--", "set", "port", "switch-fs", "qos=@newqos",
-			"--", "set", "port", "switch-vs", "qos=@newqos",
-			"--", "--id=@newqos", "create", "qos", "type=trtcm-policer", "queues=0=@q0,1=@q1",
-			# "--", "--id=@q0", "create", "queue", "other-config:cir=41600000", "other-config:eir=0", "other-config:priority=0",
-			# "--", "--id=@q1", "create", "queue", "other-config:cir=0", "other-config:eir=41600000", "other-config:priority=1"
-			"--", "--id=@q0", "create", "queue", "other-config:priority=0", "other-config:maxrate=1000000",
-			"--", "--id=@q1", "create", "queue", "other-config:priority=1", "other-config:maxrate=1000000"
-		])
-		"""
-		
 		# Try to setup the QoS setup and its queues
+		# "--", "--id=@q0", "create", "queue", "other-config:priority=0", "other-config:max-rate=100000000",
 		args = list([
 			ovs_path,
 			"--", "--id=@newqos", "create", "qos", "type=" + qos_type, "queues=0=@q0,1=@q1",
 			"--", "--id=@q0", "create", "queue", "other-config:priority=0",
-			"--", "--id=@q1", "create", "queue", "other-config:priority=5"
+			"--", "--id=@q1", "create", "queue", "other-config:priority=1"
 		])
+		for intf_name in self.__main_switch_instance.intfNames():
+			if intf_name != "lo":
+				args += ["--", "set", "Port", intf_name, "qos=@newqos"]
+		
+		log.info("Trying to initialize Open VSwitch qos stuffs: \n%s", args)
 		result = self.__main_switch_instance.cmd(args)
 		qos_id = result.splitlines()[0]
-		log.info("Trying to get ovswitch stuff working ... " + str(result))
+		log.info("Result of OpenVSwitch init command: %s", str(result))
 		log.info("QoS ID is apparently: " + qos_id)
 		
 		#
 		log.info("Switch interface names: " + str(self.__main_switch_instance.intfNames()))
-		
-		# Set all switch interfaces to use the qos
-		for intf_name in self.__main_switch_instance.intfNames():
-			
-			result = self.__main_switch_instance.cmd([
-				ovs_path,
-				"set Port %s qos=%s" % (intf_name, qos_id)
-			])
-			log.info("Tried setting interface \"%s\" to the vswitch qos: %s", intf_name, result)
 		
 		result = self.__main_switch_instance.cmd([ovs_path, "-t", "ovs-vswitchd", "show"])
 		log.info("Showing OpenvSwitch information: " + str(result))

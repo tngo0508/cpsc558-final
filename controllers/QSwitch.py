@@ -229,9 +229,7 @@ class QSwitch(app_manager.RyuApp):
 		
 		# Start with just an action that specifies which port(s) to send out on
 		actions = [
-			ofp_parser.OFPActionOutput(
-				out_port
-			)
+			ofp_parser.OFPActionOutput(out_port)
 		]
 		
 		# Let's add a flow if we're not flooding
@@ -288,9 +286,9 @@ class QSwitch(app_manager.RyuApp):
 					ic = pkt.get_protocol(icmp.icmp)
 					
 					if ip_version == 6:
-						match_extra_kwargs["icmpv4_type"] = ic.type
-					else:
 						match_extra_kwargs["icmpv6_type"] = ic.type
+					else:
+						match_extra_kwargs["icmpv4_type"] = ic.type
 				
 				# Add an action that sends this flow to a queue
 				actions.insert(0, ofp_parser.OFPActionSetQueue(queue_number))

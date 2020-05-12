@@ -14,8 +14,11 @@ class FileClient:
 	__default_server_port = 8012
 	
 	#
-	__default_request_timeout = 1
-	__default_request_retries = 1000
+	__default_request_timeout = 2
+	__default_request_retries = 100
+	
+	#
+	__downloads_count = 1
 	
 	def __init__(self, run_name=None, name=None, server_host=None, server_port=None):
 		
@@ -45,17 +48,33 @@ class FileClient:
 		
 		log.info("Running!")
 		
-		url = "http://" + self.__server_host + ":" + str(self.__server_port) + "/random-data.dat"
-		
 		self.__benchmarker.start()
+		
+		for i in range(self.__downloads_count):
+			self.do_one_download(i + 1)
+		
+		self.__benchmarker.stop()
+		log.info(self.__benchmarker)
+		
+		log.info(self.__benchmarker)
+		
+		log.info("Done!")
+	
+	def do_one_download(self, run_number):
+		
+		log = self.__logger.get()
+		
+		log.info("do_one_download() - Run #" + str(run_number))
+		
+		url = "http://" + self.__server_host + ":" + str(self.__server_port) + "/random-data.dat"
 		
 		success = False
 		any_fails = False
 		r = None
-		for i in range(self.__default_request_retries):
+		for j in range(self.__default_request_retries):
 			
 			if any_fails:
-				log.info("Trying again, I guess; Attempt #" + str(i + 1) + " ...")
+				log.info("Trying again, I guess; Attempt #" + str(j + 1) + " ...")
 			
 			try:
 				log.info("Trying to download url: " + url)
@@ -64,17 +83,13 @@ class FileClient:
 				success = True
 				break
 			except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout, TypeError):
-				log.error("Failed to download url: " + url)
+				log.error("Error trying to download url: " + url)
 				any_fails = True
 		
-		if not success:
+		if success is True:
+			response_data = r.content
+		else:
 			log.info("Failed to download url: " + url)
-			return
+			response_data = ""
 		
-		response_data = r.content
-		self.__benchmarker.set_bytes_received(len(response_data))
-		self.__benchmarker.stop()
-		
-		log.info(self.__benchmarker)
-		
-		log.info("Done!")
+		self.__benchmarker.increased_bytes_received(len(response_data))

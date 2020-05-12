@@ -56,7 +56,7 @@ LOCAL_LOG_DIR := $(MAKEFILE_DIR)/log
 #
 LOCAL_DATA_DIR := $(MAKEFILE_DIR)/data
 LOCAL_FILE_SERVER_DATAFILE := $(LOCAL_DATA_DIR)/random-data.dat
-LOCAL_FILE_SERVER_DATAFILE_SIZE_MEGABYTES := 10
+LOCAL_FILE_SERVER_DATAFILE_SIZE_MEGABYTES := 100
 
 
 #
@@ -76,6 +76,8 @@ menu:
 	@echo "make run                   ===> Run all our tests and stuff"
 	@echo
 	@echo "** Run single tests **"
+	@echo "make run-single-hub               ===> Run the dumb hub test"
+	@echo "make run-single-switch     ===> Run the simple switch test"
 	@echo "make run-single-qswitch    ===> Run the qswitch test"
 	@echo
 
@@ -106,7 +108,8 @@ $(LOCAL_FILE_SERVER_DATAFILE):	| $(LOCAL_DATA_DIR)
 deploy:
 	$(call say,Deploying repo to Mininet VM)
 	ssh $(UBUNTU_VM_USER)@"$(UBUNTU_VM_HOST)" "mkdir --parents \"$(UBUNTU_VM_REPO_DIR)\"" \
-		&& rsync --archive --delete --recursive --verbose --stats --itemize-changes --human-readable --progress \
+		&& rsync --archive --delete --delete-excluded --recursive --verbose --stats --itemize-changes --human-readable --progress \
+			--exclude '*__pycache__*' \
 			"$(MAKEFILE_DIR)"/ $(UBUNTU_VM_USER)@"$(UBUNTU_VM_HOST)":"$(UBUNTU_VM_REPO_DIR)"/
 
 
@@ -154,12 +157,43 @@ run-prepare:	deploy
 run:	run-prepare
 	$(call say,Running our tests and stuff)
 	$(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" &&  ./main.py --run --run-name demo" \
-		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name hub" \
-		&& $(MAKE) clean-mininet-state && ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name switch"  \
+		&& $(MAKE) run-hub \
+		&& $(MAKE) run-switch  \
 		&& $(MAKE) run-qswitch  \
 		&& $(MAKE) pull-logs
 .PHONY:	run
 
+
+# Single test for our DumbHub
+run-single-hub:	run-prepare
+	$(call say,Running DumbHub tests)
+	$(MAKE) run-hub \
+		&& $(MAKE) pull-logs
+.PHONY: run-dumbhub
+
+
+# Run our DumbHub tests
+run-hub:	|
+	$(call say,Running DumbHub tests)
+	$(MAKE) clean-mininet-state \
+		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name hub"
+.PHONY:	run-switch
+
+
+# Single test for our Simple Switch
+run-single-switch:	run-prepare
+	$(call say,Running simple switch tests)
+	$(MAKE) run-switch \
+		&& $(MAKE) pull-logs
+.PHONY: run-single-switch
+
+
+# Run our Simple Switch tests
+run-switch:	|
+	$(call say,Running Simple Switch tests)
+	$(MAKE) clean-mininet-state \
+		&& ssh "$(UBUNTU_VM_USER)"@"$(UBUNTU_VM_HOST)" "cd \"$(UBUNTU_VM_REPO_DIR)\" && ./main.py --run --run-name switch"
+.PHONY:	run-switch
 
 
 # Single test for our QSwitch

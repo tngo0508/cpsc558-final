@@ -49,6 +49,8 @@ class FileServer:
 		
 		the_handler = http.server.SimpleHTTPRequestHandler
 		the_server = http.server.HTTPServer(('', self.__port), the_handler)
+		# the_server = http.server.ThreadingHTTPServer(('', self.__port), the_handler)
+		# Can't use ThreadingHTTPServer because our Python is too old!
 		
 		the_server.serve_forever()
 		

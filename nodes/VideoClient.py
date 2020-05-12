@@ -4,7 +4,6 @@ from Logger import Logger
 from Benchmarker import Benchmarker
 
 
-import random
 import select
 import socket
 import subprocess
@@ -25,8 +24,7 @@ class VideoClient:
 	__socket = None
 	__listener_thread = None
 	
-	__wanted_data_size_megabytes = 10
-	__beg_string = "MOAR PLZ!\n".encode()
+	__beg_string = "Gimme!".encode()
 	
 	def __init__(self, run_name, name, server_host=None, server_port=None):
 		
@@ -67,7 +65,7 @@ class VideoClient:
 		log.info("Running ...")
 		
 		self.init_socket()
-		self.leech_loop()
+		self.receive_from_server()
 		
 		log.info("Finished running")
 		
@@ -102,34 +100,52 @@ class VideoClient:
 				)
 				
 			else:
-				time.sleep(.001)
+				time.sleep(.0001)
 	
-	def leech_loop(self):
+	def kickstart_server(self):
 		
 		log = self.__logger.get()
 		
-		wanted_bytes = self.__wanted_data_size_megabytes * 1048576
+		log.info("Begin kickstart_server")
 		
-		log.info("Begin leech loops")
+		# Send 1024 of pleas for data
+		for i in range(1024):
+			
+			log.info("Asking server to start sending data")
+			
+			self.ask_server_for_data()
+		
+		log.info("End kickstart_server")
+	
+	def receive_from_server(self):
+		
+		log = self.__logger.get()
+		
+		log.info("Begin wait_for_server_finished")
+		
+		self.kickstart_server()
 		
 		self.__benchmarker.start()
-		self.init_data_receiver()
-		while self.__benchmarker.get_bytes_received() < wanted_bytes:
+		self.init_data_receiver()  # Must happen after benchmark starts
+		no_data_count = 0
+		while no_data_count < 15:
 			
-			log.info("Leech loop iteration")
+			# log.info("Iteration of loop: wait_for_server_finished")
 			
-			if not self.socket_has_data():
+			if self.socket_has_data():
 				
-				self.ask_server_for_data()
-				
-				random_millis = random.random()
-				time.sleep(random_millis/1000)
+				no_data_count = 0
+				log.info("Got some data from server; Total %s megabytes", self.__benchmarker.get_megabytes_received())
 				
 			else:
-				log.info("Have data ... will wait")
-				time.sleep(.001)
+				
+				no_data_count += 1
+				log.info("wait_for_server_finished() - No incoming data; Count is: " + str(no_data_count))
+			
+			time.sleep(1)
 		
 		self.__benchmarker.stop()
+		self.__benchmarker.adjust_end_time(no_data_count)  # For the 10 second timeout
 		log.info(self.__benchmarker)
 		
 		log.info("End leech loops")

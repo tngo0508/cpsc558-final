@@ -24,8 +24,7 @@ class VideoClient:
 	__socket = None
 	__listener_thread = None
 	
-	__wanted_data_size_megabytes = 10
-	__beg_string = "MOAR PLZ!\n".encode()
+	__beg_string = "Gimme!".encode()
 	
 	def __init__(self, run_name, name, server_host=None, server_port=None):
 		
@@ -66,7 +65,7 @@ class VideoClient:
 		log.info("Running ...")
 		
 		self.init_socket()
-		self.leech_loop()
+		self.receive_from_server()
 		
 		log.info("Finished running")
 		
@@ -86,7 +85,7 @@ class VideoClient:
 		
 		while self.__benchmarker.is_running():
 			
-			# log.info("Data receiver iteration")
+			log.debug("Data receiver iteration")
 			
 			if self.socket_has_data():
 				
@@ -95,51 +94,75 @@ class VideoClient:
 				received, sender = self.__socket.recvfrom(1048576)
 				self.__benchmarker.increased_bytes_received(len(received))
 				
-				log.debug(
+				log.info(
 					"Received " + str(len(received)) + " bytes from" + str(sender)
 					+ "; Total = " + str(self.__benchmarker.get_bytes_received())
 				)
 				
 			else:
-				time.sleep(.001)
+				time.sleep(.0001)
 	
-	def leech_loop(self):
+	def kickstart_server(self):
 		
 		log = self.__logger.get()
 		
-		wanted_bytes = self.__wanted_data_size_megabytes * 1048576
+		log.info("Begin kickstart_server")
 		
-		log.info("Begin leech loops")
+		# Send 1024 of pleas for data
+		for i in range(1024):
+			
+			log.info("Asking server to start sending data")
+			
+			self.ask_server_for_data()
+		
+		log.info("End kickstart_server")
+	
+	def receive_from_server(self):
+		
+		log = self.__logger.get()
+		
+		log.info("Begin wait_for_server_finished")
+		
+		self.kickstart_server()
 		
 		self.__benchmarker.start()
-		self.init_data_receiver()
-		while self.__benchmarker.get_bytes_received() < wanted_bytes:
+		self.init_data_receiver()  # Must happen after benchmark starts
+		no_data_count = 0
+		while no_data_count < 15:
 			
-			if not self.socket_has_data():
-				self.ask_server_for_data()
+			# log.info("Iteration of loop: wait_for_server_finished")
+			
+			if self.socket_has_data():
+				
+				no_data_count = 0
+				log.info("Got some data from server; Total %s megabytes", self.__benchmarker.get_megabytes_received())
+				
 			else:
-				log.debug("Have data ... will wait")
+				
+				no_data_count += 1
+				log.info("wait_for_server_finished() - No incoming data; Count is: " + str(no_data_count))
 			
-			time.sleep(.001)
+			time.sleep(1)
 		
 		self.__benchmarker.stop()
+		self.__benchmarker.adjust_end_time(no_data_count)  # For the 10 second timeout
 		log.info(self.__benchmarker)
 		
 		log.info("End leech loops")
 	
 	def ask_server_for_data(self):
 		
-		# log = self.__logger.get()
+		log = self.__logger.get()
 		
-		# log.debug("Asking server for data: " + str(self.__server_host) + "::" + str(self.__server_port))
+		log.info("Asking server for data: " + str(self.__server_host) + "::" + str(self.__server_port))
 		self.__socket.sendto(self.__beg_string, (self.__server_host, self.__server_port))
-		# log.debug("Done asking server for data")
+		# log.info("Done asking server for data")
 		
 	def socket_has_data(self):
 		
 		# log = self.__logger.get()
 		
-		# log.debug("Checking socket for data")
+		# log.info("Checking socket for data")
 		if self.__socket:
 			read_sockets, write_sockets, error_sockets = select.select([self.__socket], [], [], 0)
 			for sock in read_sockets:
@@ -147,7 +170,7 @@ class VideoClient:
 					# log.debug("Socket has data")
 					return True
 		
-		# log.debug("Socket has no data")
+		# log.info("Socket has no data")
 		
 		return False
 	
@@ -156,6 +179,7 @@ class VideoClient:
 		self.__logger.get().info("Making sure we're not listening")
 		
 		if self.__socket is not None:
+			
 			self.__logger.get().info("We were listening; Shutting down")
 			
 			self.__socket.close()

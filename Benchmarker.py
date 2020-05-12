@@ -17,7 +17,7 @@ class Benchmarker:
 		self.reset()
 	
 	def __str__(self):
-	
+		
 		s = ""
 		
 		s += type(self).__name__ + " for " + self.__label
@@ -74,6 +74,10 @@ class Benchmarker:
 		self.set_bytes_received(
 			self.get_bytes_received() + n
 		)
+	
+	def adjust_end_time(self, seconds):
+		
+		self.__end_time -= seconds * 1000
 	
 	def get_end_time(self):
 	

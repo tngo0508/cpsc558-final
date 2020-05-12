@@ -7,8 +7,11 @@ import graphviz
 from mininet.net import Mininet
 from mininet.topo import Topo
 from mininet.link import TCLink
+from mininet.node import OVSSwitch
+
 
 import os
+import subprocess
 
 
 class Topology(Topo):
@@ -51,10 +54,10 @@ class Topology(Topo):
 	__ip_counter = 1
 	
 	__BANDWIDTH_LIMIT_SERVERS_MBPS = 1000
-	__BANDWIDTH_LIMIT_SERVERS_DELAY = "1ms"
+	__BANDWIDTH_LIMIT_SERVERS_DELAY = "0.5ms"
 	
 	__BANDWIDTH_LIMIT_CLIENTS_MBPS = 100
-	__BANDWIDTH_LIMIT_CLIENTS_DELAY = "2ms"
+	__BANDWIDTH_LIMIT_CLIENTS_DELAY = "1ms"
 	
 	def __init__(self, logger):
 		
@@ -62,10 +65,13 @@ class Topology(Topo):
 		# type: Logger
 		
 		super(Topology, self).__init__()
-		
-	def set_net(self, net: Mininet):
 	
+	# Should be run after build
+	def set_net(self, net: Mininet):
+		
 		self.__net = net
+		
+		self.consume_instances()
 	
 	def build(self):
 		
@@ -86,27 +92,54 @@ class Topology(Topo):
 		# Create file server host
 		log.info("Creating file server host")
 		self.add_host_with_addresses(self.__file_server_name)
+		"""
 		self.addLink(
 			self.__main_switch_name,
 			self.__file_server_name,
+			intfName1="switch-fs",
 			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_SERVERS_MBPS, delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
+		)
+		"""
+		self.add_link_to_main_switch(
+			node_name=self.__file_server_name,
+			interface_name="switch-fs",
+			preferred_mbps=self.__BANDWIDTH_LIMIT_SERVERS_MBPS,
+			preferred_delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
 		)
 		
 		# Create video server host
 		log.info("Creating video server host")
 		self.add_host_with_addresses(self.__video_server_name)
+		"""
 		self.addLink(
 			self.__main_switch_name,
 			self.__video_server_name,
+			intfName1="switch-vs",
 			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_SERVERS_MBPS, delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
+		)
+		"""
+		self.add_link_to_main_switch(
+			node_name=self.__video_server_name,
+			interface_name="switch-vs",
+			preferred_mbps=self.__BANDWIDTH_LIMIT_SERVERS_MBPS,
+			preferred_delay=self.__BANDWIDTH_LIMIT_SERVERS_DELAY
 		)
 		
 		# Create our tattle tail host
 		log.info("Creating tattle tail host")
 		self.add_host_with_addresses(self.__tattle_tail_name)
+		"""
 		self.addLink(
 			self.__main_switch_name, self.__tattle_tail_name,
+			intfName1="switch-tt",
 			cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+		)
+		"""
+		self.add_link_to_main_switch(
+			node_name=self.__tattle_tail_name,
+			interface_name="switch-tt",
+			preferred_mbps=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS,
+			preferred_delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
 		)
 		
 		# Create file clients
@@ -115,10 +148,19 @@ class Topology(Topo):
 			client_name = self.__file_client_name_prefix + str(i + 1)
 			log.info("Creating file client: " + client_name)
 			self.add_host_with_addresses(client_name)
+			"""
 			self.addLink(
 				self.__main_switch_name,
 				client_name,
+				intfName1="switch-" + client_name,
 				cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+			)
+			"""
+			self.add_link_to_main_switch(
+				node_name=client_name,
+				interface_name="switch-" + client_name,
+				preferred_mbps=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS,
+				preferred_delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
 			)
 			self.__file_client_names.append(client_name)
 		
@@ -128,10 +170,19 @@ class Topology(Topo):
 			client_name = self.__video_client_name_prefix + str(i + 1)
 			log.info("Creating video client: " + client_name)
 			self.add_host_with_addresses(client_name)
+			"""
 			self.addLink(
 				self.__main_switch_name,
 				client_name,
+				intfName1="switch-" + client_name,
 				cls=TCLink, bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS, delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+			)
+			"""
+			self.add_link_to_main_switch(
+				node_name=client_name,
+				interface_name="switch-" + client_name,
+				preferred_mbps=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS,
+				preferred_delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
 			)
 			self.__video_client_names.append(client_name)
 		
@@ -179,7 +230,8 @@ class Topology(Topo):
 		return self.addSwitch(
 			name,
 			mac=mac,
-			ip=ip
+			ip=ip,
+			cls=OVSSwitch
 		)
 	
 	def add_host_with_addresses(self, name):
@@ -196,6 +248,30 @@ class Topology(Topo):
 		)
 		
 		return host
+	
+	def add_link_to_main_switch(self, node_name, interface_name=None, preferred_mbps=None, preferred_delay=None):
+		
+		# Yes disable because some forum said this might interfere with vswitch queue stuff
+		disable_limiting = True
+		
+		if disable_limiting is False and (preferred_mbps is not None or preferred_delay is not None):
+			
+			self.addLink(
+				self.__main_switch_name,
+				node_name,
+				intfName1=interface_name,
+				cls=TCLink,
+				bw=self.__BANDWIDTH_LIMIT_CLIENTS_MBPS,
+				delay=self.__BANDWIDTH_LIMIT_CLIENTS_DELAY
+			)
+			
+		else:
+			
+			self.addLink(
+				self.__main_switch_name,
+				node_name,
+				intfName1=interface_name
+			)
 	
 	def get_file_server_instance(self):
 		
@@ -325,3 +401,94 @@ class Topology(Topo):
 	def get_video_client_instances(self):
 	
 		return self.__video_client_instances
+	
+	# Heavy inspiration: http://docs.openvswitch.org/en/latest/topics/dpdk/qos/
+	# Also: https://github.com/mininet/mininet/pull/132
+	def create_qos_queues(self):
+		
+		log = self.__logger.get()
+		
+		result = self.__main_switch_instance.setup()
+		log.info("Hey: " + str(self.__main_switch_instance) + "; " + str(result))
+		
+		# ovs_path = "/usr/bin/ovs-vsctl"
+		ovs_path = "ovs-vsctl"
+		
+		#
+		args = list([
+			ovs_path,
+			"--", "set", "port", "switch-fs", "qos=@newqos",
+			"--", "set", "port", "switch-vs", "qos=@newqos",
+			"--", "--id=@newqos", "create", "qos", "type=trtcm-policer", "queues=0=@q0,1=@q1",
+			# "--", "--id=@q0", "create", "queue", "other-config:cir=41600000", "other-config:eir=0", "other-config:priority=0",
+			# "--", "--id=@q1", "create", "queue", "other-config:cir=0", "other-config:eir=41600000", "other-config:priority=1"
+			"--", "--id=@q0", "create", "queue", "other-config:priority=0", "other-config:maxrate=1000000",
+			"--", "--id=@q1", "create", "queue", "other-config:priority=1", "other-config:maxrate=1000000"
+		])
+		# Try to setup the QoS setup and its queues
+		p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		result = p.communicate()
+		# qos_id = result.splitlines()[0]
+		log.info("Trying to get ovswitch stuff working ... " + str(result))
+		# log.info("QoS ID is apparently: " + qos_id)
+		
+		#
+		log.info("Switch interface names: " + str(self.__main_switch_instance.intfNames()))
+		for intf in self.__main_switch_instance.intfList():
+			log.info("Uhm interface: " + str(intf) + "; " + intf.name)
+		
+		"""
+		result = self.__main_switch_instance.cmd([
+			ovs_path,
+			"set Port %s qos=%s" % ("switch-vs", qos_id)
+		])
+		log.info("Trying to hard set ports to different queues ... " + str(result))
+		#
+		result = self.__main_switch_instance.cmd([
+			ovs_path,
+			"set Port %s qos=%s" % ("'switch-fs'", "q1")
+		])
+		log.info("Trying to hard set ports to different queues ... " + str(result))
+		"""
+		
+		result = self.__main_switch_instance.cmd([ovs_path, "list-br"])
+		log.info("Executed erm ... " + str(result))
+	
+	def create_qos_queues_on_switch(self):
+		
+		log = self.__logger.get()
+		
+		self.__main_switch_instance.setup()
+		
+		# ovs_path = "/usr/bin/ovs-vsctl"
+		ovs_path = "ovs-vsctl"
+		
+		# qos_type = "trtcm-policer"
+		qos_type = "linux-htb"
+		
+		# Try to setup the QoS setup and its queues
+		# "--", "--id=@q0", "create", "queue", "other-config:priority=0", "other-config:max-rate=100000000",
+		args = list([
+			ovs_path,
+			"--", "--id=@newqos", "create", "qos", "type=" + qos_type, "queues=0=@q0,1=@q1",
+			"--", "--id=@q0", "create", "queue", "other-config:priority=0", "other-config:max-rate=100000000",
+			"--", "--id=@q1", "create", "queue", "other-config:priority=1", "other-config:max-rate=100000000"
+		])
+		for intf_name in self.__main_switch_instance.intfNames():
+			if intf_name != "lo":
+				args += ["--", "set", "Port", intf_name, "qos=@newqos"]
+		
+		log.info("Trying to initialize Open VSwitch qos stuffs: \n%s", args)
+		result = self.__main_switch_instance.cmd(args)
+		qos_id = result.splitlines()[0]
+		log.info("Result of OpenVSwitch init command: %s", str(result))
+		log.info("QoS ID is apparently: " + qos_id)
+		
+		#
+		log.info("Switch interface names: " + str(self.__main_switch_instance.intfNames()))
+		
+		result = self.__main_switch_instance.cmd([ovs_path, "-t", "ovs-vswitchd", "show"])
+		log.info("Showing OpenvSwitch information: " + str(result))
+		
+		result = self.__main_switch_instance.cmd([ovs_path, "list-br"])
+		log.info("Showing OpenvSwitch information: " + str(result))

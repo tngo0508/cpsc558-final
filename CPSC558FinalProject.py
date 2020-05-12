@@ -102,7 +102,6 @@ class CPSC558FinalProject:
 			waitConnected=False
 		)
 		self.__topo.set_net(self.__net)
-		self.__topo.consume_instances()
 		
 		log.info("Starting Mininet (will wait for controller)")
 		self.__net.start()
@@ -112,6 +111,9 @@ class CPSC558FinalProject:
 			log.error("FAIL")
 			return
 		log.info("Mininet found a controller to connect to")
+		
+		# Create qos queues
+		self.__topo.create_qos_queues_on_switch()
 		
 		# Ping tests
 		self.ping_all()
@@ -411,7 +413,7 @@ class CPSC558FinalProject:
 				# Bytes received
 				match = pattern_bytes_received.search(s)
 				if match is None:
-					raise Exception("Failed to parse node; Cannot find bytes received!")
+					raise Exception("Failed to parse node; Cannot find bytes received in: " + node_log_file_name)
 				node_bytes = int(match.group("bytes"))
 				total_bytes += node_bytes
 				log.info(

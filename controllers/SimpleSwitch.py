@@ -69,17 +69,18 @@ class SimpleSWitch(app_manager.RyuApp):
     # function template at https://ryu.readthedocs.io/en/latest/ofproto_v1_3_ref.html#modify-state-messages
     def send_flow_mod(self, datapath, match, actions, new_priority=0):
         
-        # self.logger.info("Begin send_flow_mod()")
-        # self.logger.info("Actions: " + str(actions))
+        self.logger.info("Begin send_flow_mod()")
+        self.logger.info("Match: " + str(match))
+        self.logger.info("Actions: " + str(actions))
         
         ofp = datapath.ofproto
         ofp_parser = datapath.ofproto_parser
 
-        cookie = cookie_mask = 0
-        table_id = 0
-        idle_timeout = hard_timeout = 0
+        # cookie = cookie_mask = 0
+        # table_id = 0
+        # idle_timeout = hard_timeout = 0
         priority = new_priority
-        buffer_id = ofp.OFP_NO_BUFFER
+        # buffer_id = ofp.OFP_NO_BUFFER
         inst = [
             ofp_parser.OFPInstructionActions(
                 ofp.OFPIT_APPLY_ACTIONS,
@@ -151,7 +152,7 @@ class SimpleSWitch(app_manager.RyuApp):
         eth = pkt.get_protocol(ethernet.ethernet)
         # print(pkt)
 
-        src_mac= eth.src
+        src_mac = eth.src
         dst_mac = eth.dst
         # self.logger.info("Packet is flowing from %s to %s", src, dst)
         

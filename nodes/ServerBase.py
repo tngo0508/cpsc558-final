@@ -36,7 +36,14 @@ class ServerBase:
 		
 	def __del__(self):
 		
+		log = self.__logger.get()
+		
+		log.info("Begin __del__")
+		log.exception(Exception("Debugging stack trace for __del__"))
+		
 		self.stop_listening()
+		
+		log.info("End __del__")
 	
 	def socket_type_to_string(self):
 	
